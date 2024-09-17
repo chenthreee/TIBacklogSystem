@@ -149,13 +149,13 @@ export class TIBacklogOrders {
     const itemNumber = this.lineItems.length + 1;
     this.lineItems.push({
       customerLineItemNumber: itemNumber,
-      tiPartNumber: partNumber,
-      customerAnticipatedUnitPrice: unitPrice,
-      customerCurrencyCode: currencyCode,
+      tiPartNumber: partNumber, // 零件号
+      customerAnticipatedUnitPrice: unitPrice, // 单价
+      customerCurrencyCode: currencyCode, // 货币代码
       schedules: [
         {
-          requestedQuantity: quantity,
-          requestedDeliveryDate: deliveryDate.toISOString().split('T')[0],
+          requestedQuantity: quantity, // 数量
+          requestedDeliveryDate: deliveryDate.toISOString().split('T')[0], // 交货日期
         },
       ],
     });
