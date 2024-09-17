@@ -18,6 +18,8 @@ const OrderSchema = new mongoose.Schema({
   orderNumber: String,
   tiOrderNumber: String,
   components: [ComponentSchema],
+  estimatedDeliveryDate: { type: String, default: '' }, // 新增字段
+  shippingDate: { type: String, default: '' }, // 新增字段
 });
 
 const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);

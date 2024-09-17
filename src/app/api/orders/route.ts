@@ -39,7 +39,9 @@ export async function POST(req: NextRequest) {
 
     const newOrder = new Order({
       ...orderData,
-      orderNumber: new Order()._id.toString()
+      orderNumber: new Order()._id.toString(),
+      estimatedDeliveryDate: '', // 初始化为空字符串
+      shippingDate: '', // 初始化为空字符串
     })
     const savedOrder = await newOrder.save()
 
