@@ -7,6 +7,7 @@ const ComponentSchema = new mongoose.Schema({
   unitPrice: {type: Number, required: true},
   tiPrice: {type: Number, default: 0},
   status: {type: String, default: 'Pending'}, // 新增状态字段
+  deliveryDate: {type: String, default: ''}, // 新增交期字段
 });
 
 const QuotationSchema = new mongoose.Schema({

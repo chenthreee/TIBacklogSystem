@@ -23,6 +23,7 @@ export async function GET(request: Request) {
       const pdfUrl = `data:application/pdf;base64,${invoiceData.documents[0].documentPDF}`;
       invoiceData.pdfUrl = pdfUrl;
     }
+    console.log('发票数据:', JSON.stringify(invoiceData, null, 2));
 
     return NextResponse.json(invoiceData);
   } catch (error) {

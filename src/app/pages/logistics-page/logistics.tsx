@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -43,7 +43,7 @@ export default function LogisticsInformation() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
-  
+
   useEffect(() => {
     fetchData()
   }, [currentPage, searchTerm])

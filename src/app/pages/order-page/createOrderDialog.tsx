@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Upload, Plus } from "lucide-react";
 
 interface CreateOrderDialogProps {
   isCreateOrderDialogOpen: boolean;
@@ -12,12 +11,9 @@ interface CreateOrderDialogProps {
     customer: string;
     date: string;
     status: string;
-    components: any[];
-    totalAmount?: number;
+    quotationId: string; // 新增字段
   };
   setNewOrder: React.Dispatch<React.SetStateAction<any>>;
-  fileInputRef: React.RefObject<HTMLInputElement>;
-  handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleCreateOrder: () => void;
 }
 
@@ -26,8 +22,6 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
   setIsCreateOrderDialogOpen,
   newOrder,
   setNewOrder,
-  fileInputRef,
-  handleFileUpload,
   handleCreateOrder,
 }) => {
   return (
@@ -35,7 +29,7 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
       <DialogContent className="sm:max-w-[425px] bg-white">
         <DialogHeader>
           <DialogTitle>创建新订单</DialogTitle>
-          <DialogDescription>填写订单信息并上传Excel文件以添加元件。</DialogDescription>
+          <DialogDescription>填写订单信息并输入报价ID以导入元件信息。</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -67,26 +61,14 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">元件</Label>
-            <div className="col-span-3">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                className="hidden"
-                accept=".xlsx,.xls"
-              />
-              <Button onClick={() => fileInputRef.current?.click()} variant="outline">
-                <Upload className="mr-2 h-4 w-4" /> 上传Excel
-              </Button>
-            </div>
+            <Label htmlFor="quotationId" className="text-right">报价ID</Label>
+            <Input
+              id="quotationId"
+              value={newOrder.quotationId}
+              onChange={(e) => setNewOrder({ ...newOrder, quotationId: e.target.value })}
+              className="col-span-3"
+            />
           </div>
-          {newOrder.components && newOrder.components.length > 0 && (
-            <div className="col-span-4">
-              <p>已上传 {newOrder.components.length} 个元件</p>
-              <p>总金额: ¥{newOrder.totalAmount?.toFixed(2)}</p>
-            </div>
-          )}
         </div>
         <DialogFooter>
           <Button onClick={handleCreateOrder}>创建订单</Button>

@@ -145,12 +145,13 @@ export class TIBacklogOrders {
   }
 
   // 添加商品到订单
-  addItemToCart(partNumber: string, quantity: number, deliveryDate: Date, unitPrice: number, currencyCode = 'USD'): void {
+  addItemToCart(partNumber: string, quantity: number, deliveryDate: Date, unitPrice: number, quoteNumber: string, currencyCode = 'USD'): void {
     const itemNumber = this.lineItems.length + 1;
     this.lineItems.push({
       customerLineItemNumber: itemNumber,
       tiPartNumber: partNumber, // 零件号
       customerAnticipatedUnitPrice: unitPrice, // 单价
+      quoteNumber: quoteNumber, // 报价单号
       customerCurrencyCode: currencyCode, // 货币代码
       schedules: [
         {

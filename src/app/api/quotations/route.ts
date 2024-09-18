@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Quotation from '@/models/Quotation';
-import { checkQuotationDataTypes , getDetailedType} from '@/lib/dataTypeChecker';
+import { checkQuotationDataTypes} from '@/lib/dataTypeChecker';
 
 // 模拟数据库中的报价数据
 export async function GET() {
@@ -33,6 +33,7 @@ export async function GET() {
         quantity: Number(c.quantity) || 0,
         unitPrice: Number(c.unitPrice) || 0,
         tiPrice: Number(c.tiPrice) || 0,
+        deliveryDate: c.deliveryDate || 'N/A',
         status: c.status || 'N/A'
       })) : []
     }));
@@ -49,17 +50,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    // 连接数据库
     await dbConnect();
 
-    // 获取前端发送的数据
     const data = await request.json();
+    console.log('接收到的报价数据:', JSON.stringify(data, null, 2));
 
-    // 创建新的报价对象并保存到数据库
     const newQuotation = new Quotation(data);
     const savedQuotation = await newQuotation.save();
 
-    // 返回保存成功的响应
+    console.log('保存到数据库的报价:', JSON.stringify(savedQuotation.toObject(), null, 2));
+
     return NextResponse.json(savedQuotation, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/quotations:', error);

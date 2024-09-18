@@ -47,6 +47,7 @@ interface Component {
   unitPrice: number;
   tiPrice: number;
   status: string;
+  deliveryDate: string; // 新增交期字段
 }
 
 const fetchQuotations = async (page: number, searchTerm: string) => {
@@ -232,6 +233,7 @@ export default function QuotationManagement() {
             name: row["元件名称"],
             quantity: row["数量"],
             unitPrice: row["单价"],
+            deliveryDate: row["交期"] ? new Date((row["交期"] - 25569) * 86400 * 1000).toISOString().split('T')[0] : '',
             status: "",
           })),
           totalAmount: json.reduce(

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { ChevronDown, ChevronUp, Pencil, Trash2, Search, Upload, Plus, CheckCircle, Edit } from "lucide-react"
+import { Plus} from "lucide-react"
 import * as XLSX from 'xlsx'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,6 +25,7 @@ interface Order {
   status: string
   orderNumber: string
   tiOrderNumber: string
+  quotationId: string
   components: Component[]
 }
 
@@ -35,6 +36,7 @@ interface Component {
   unitPrice: number
   status: string
   deliveryDate: string
+  quoteNumber: string
   tiLineItemNumber?: string // 将 tiLineItemNumber 设为可选属性
 }
 
@@ -53,7 +55,7 @@ export default function OrderManagement() {
     status: "处理中",
     tiOrderNumber: "",
     orderNumber: "",
-    components: []
+    quotationId: "",
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
@@ -196,7 +198,7 @@ export default function OrderManagement() {
         date: new Date().toISOString().split('T')[0],
         customer: "",
         status: "处理中",
-        components: []
+        quotationId: "",
       });
 
       toast({
@@ -231,7 +233,8 @@ export default function OrderManagement() {
           unitPrice: row['单价'],
           status: '待采购',
           deliveryDate: row['交期'] ? new Date((row['交期'] - 25569) * 86400 * 1000).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          tiLineItemNumber: ''
+          tiLineItemNumber: '',
+          quoteNumber: ''
         }))
 
         const totalAmount = components.reduce((sum, comp) => sum + comp.quantity * comp.unitPrice, 0)
@@ -239,7 +242,7 @@ export default function OrderManagement() {
         setNewOrder(prev => ({
           ...prev,
           components,
-          totalAmount
+          totalAmount,
         }))
       }
       reader.readAsArrayBuffer(file)
@@ -341,7 +344,7 @@ export default function OrderManagement() {
       const updatedOrders = orders.map(o => 
         o._id === orderId ? { 
           ...o, 
-          status: data.order.status,
+          status: data.order.status,  
           components: data.order.components
         } : o
       );

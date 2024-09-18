@@ -8,6 +8,7 @@ const ComponentSchema = new mongoose.Schema({
   status: String,
   deliveryDate: String,
   tiLineItemNumber: String, // 新增字段
+  quoteNumber: String, // 新增字段
 });
 
 const OrderSchema = new mongoose.Schema({
@@ -20,6 +21,7 @@ const OrderSchema = new mongoose.Schema({
   components: [ComponentSchema],
   estimatedDeliveryDate: { type: String, default: '' }, // 新增字段
   shippingDate: { type: String, default: '' }, // 新增字段
+  quotationId: String, // 如果之前没有，也需要添加这个字段
 });
 
 const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);
