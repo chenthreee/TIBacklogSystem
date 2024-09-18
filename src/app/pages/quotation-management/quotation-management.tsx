@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"
 
 // 定义Quotation类型
 interface Quotation {
@@ -98,8 +98,7 @@ export default function QuotationManagement() {
   const [editingComponent, setEditingComponent] = useState<any>(null);
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
-  const [isQuotationUpdated, setIsQuotationUpdated] = useState(false);
-
+  const { toast } = useToast()
   useEffect(() => {
     fetchData();
   }, [currentPage, searchTerm]);
@@ -150,6 +149,8 @@ export default function QuotationManagement() {
 
       // 删除成功后重新获取数据
       await fetchData();
+
+      
       toast({
         title: "组件已删除",
         description: "元件已成功从报价中删除。",
@@ -286,9 +287,12 @@ export default function QuotationManagement() {
       const result = await response.json();
       console.log("TI响应:", result);
 
+      // 刷新数据
+      await fetchData();
+
       toast({
         title: "报价已发送",
-        description: "报价已成功发送到TI。",
+        description: "报价已成功发送到TI，页面已更新。",
       });
     } catch (error) {
       console.error("发送报价到TI时出错:", error);
@@ -336,6 +340,7 @@ export default function QuotationManagement() {
       }
       const data = await response.json();
       console.log("查询结果:", data);
+      await fetchData();
 
       // 显示查询结果给用户
       toast({
