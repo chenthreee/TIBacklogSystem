@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { toast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 interface InvoiceInfo {
   orderId: string
@@ -50,7 +50,8 @@ export default function FinancialInvoice() {
   const [totalPages, setTotalPages] = useState(1)
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-
+  const { toast } = useToast()
+  
   useEffect(() => {
     fetchData()
   }, [currentPage, searchTerm])

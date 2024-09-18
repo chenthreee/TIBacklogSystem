@@ -10,10 +10,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { toast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import CreateOrderDialog from './createOrderDialog';
 import OrderTable from './orderTable';
 
@@ -57,6 +56,7 @@ export default function OrderManagement() {
     components: []
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchData()
