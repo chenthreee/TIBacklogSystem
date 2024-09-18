@@ -11,6 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import QuotationManagement from '../quotation-management/quotation-management'
+import OrderPage from '../order-page/order-page'
+import Logistics from '../logistics-page/logistics'
+import InvoicePage from '../invoice-page/invoice'
 
 export default function OrderManagementSystem() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -21,11 +24,11 @@ export default function OrderManagementSystem() {
       case 'quotation':
         return <QuotationManagement />
       case 'order':
-        return <div>订单管理内容</div>
+        return <OrderPage />
       case 'logistics':
-        return <div>物流信息内容</div>
+        return <Logistics />
       case 'finance':
-        return <div>财务票据内容</div>
+        return <InvoicePage />
       default:
         return <div>请选择一个选项</div>
     }
