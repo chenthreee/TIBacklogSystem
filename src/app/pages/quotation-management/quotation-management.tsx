@@ -32,11 +32,7 @@ import { toast } from "@/hooks/use-toast";
 
 // 定义Quotation类型
 interface Quotation {
-<<<<<<< HEAD
-  id: number;
-=======
   //id: string;
->>>>>>> main
   date: string;
   customer: string;
   totalAmount: number;
@@ -45,11 +41,7 @@ interface Quotation {
 }
 
 interface Component {
-<<<<<<< HEAD
-  id: number;
-=======
   id: string;
->>>>>>> main
   name: string;
   quantity: number;
   unitPrice: number;
@@ -59,23 +51,6 @@ interface Component {
 
 const fetchQuotations = async (page: number, searchTerm: string) => {
   // 这里应该是实际的API调用
-<<<<<<< HEAD
-  const response = await fetch('/api/quotations');
-  const data = await response.json();
-
-  const filteredQuotations = data.filter((q: Quotation) =>
-    q.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    q.date.includes(searchTerm)
-  )
-
-  const pageSize = 2
-  const startIndex = (page - 1) * pageSize
-  const paginatedQuotations = filteredQuotations.slice(startIndex, startIndex + pageSize)
-
-  return {
-    quotations: paginatedQuotations,
-    totalPages: Math.ceil(filteredQuotations.length / pageSize)
-=======
   try {
     const response = await fetch("/api/quotations");
     const data = await response.json();
@@ -110,34 +85,30 @@ const fetchQuotations = async (page: number, searchTerm: string) => {
   } catch (error) {
     console.error("Error fetching quotations:", error);
     return { quotations: [], totalPages: 0 };
->>>>>>> main
   }
 };
 
 export default function QuotationManagement() {
-  const [quotations, setQuotations] = useState<any[]>([])
-  const [expandedQuotations, setExpandedQuotations] = useState<number[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [editingComponent, setEditingComponent] = useState<any>(null)
-  const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false)
-  const [customerName, setCustomerName] = useState('')
+  const [quotations, setQuotations] = useState<any[]>([]);
+  const [expandedQuotations, setExpandedQuotations] = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [editingComponent, setEditingComponent] = useState<any>(null);
+  const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
+  const [customerName, setCustomerName] = useState("");
   const [isQuotationUpdated, setIsQuotationUpdated] = useState(false);
-  
+
   useEffect(() => {
     fetchData();
   }, [currentPage, searchTerm]);
 
-<<<<<<< HEAD
-=======
   useEffect(() => {
     // 这里可以添加一些逻辑来处理状态变化后的操作
     console.log("Quotations updated:", quotations);
   }, [quotations]);
 
->>>>>>> main
   const fetchData = async () => {
     setIsLoading(true);
     const data = await fetchQuotations(currentPage, searchTerm);
@@ -195,7 +166,7 @@ export default function QuotationManagement() {
   };
 
   const handleSaveComponent = async (editedComponent: any) => {
-    console.log('handleSaveComponent called with:', editedComponent);
+    console.log("handleSaveComponent called with:", editedComponent);
     try {
       const response = await fetch(
         `/api/quotations/${editedComponent.quotationId}/components/${editedComponent.id}`,
@@ -237,7 +208,7 @@ export default function QuotationManagement() {
     } catch (error) {
       console.error("Error updating component:", error);
     }
-  }
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -253,14 +224,14 @@ export default function QuotationManagement() {
         // 处理Excel数据并创建新的报价
         const newQuotation = {
           id: quotations.length + 1,
-          date: new Date().toISOString().split('T')[0],
+          date: new Date().toISOString().split("T")[0],
           customer: customerName, // 使用输入的客户名称
->>>>>>> main
           components: json.map((row: any, index) => ({
             id: index + 1,
-            name: row['元件名称'],
-            quantity: row['数量'],
-            unitPrice: row['单价']
+            name: row["元件名称"],
+            quantity: row["数量"],
+            unitPrice: row["单价"],
+            status: "",
           })),
           totalAmount: json.reduce(
             (sum: number, row: any) => sum + row["数量"] * row["单价"],
@@ -286,20 +257,99 @@ export default function QuotationManagement() {
           .catch((error) => {
             console.error("保存报价时出错:", error);
           });
-      }
-      reader.readAsArrayBuffer(file)
+      };
+      reader.readAsArrayBuffer(file);
     }
   };
 
   const triggerFileInput = () => {
-<<<<<<< HEAD
-=======
     setIsCustomerDialogOpen(true);
   };
 
   const handleCustomerDialogSubmit = () => {
     setIsCustomerDialogOpen(false);
-    document.getElementById('excel-upload')?.click();
+    document.getElementById("excel-upload")?.click();
+  };
+  const handleSendToTI = async (quotationId: string) => {
+    try {
+      const response = await fetch(
+        `/api/quotations/${quotationId}/send-to-ti`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("发送到TI失败");
+      }
+
+      const result = await response.json();
+      console.log("TI响应:", result);
+
+      toast({
+        title: "报价已发送",
+        description: "报价已成功发送到TI。",
+      });
+    } catch (error) {
+      console.error("发送报价到TI时出错:", error);
+      toast({
+        title: "发送失败",
+        description: "发送报价到TI时发生错误，请稍后重试。",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteQuotation = async (quotationId: string) => {
+    try {
+      const response = await fetch(`/api/quotations/${quotationId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "删除报价失败");
+      }
+
+      await fetchData(); // 重新获取数据以更新列表
+      toast({
+        title: "报价已删除",
+        description: "报价已成功从数据库中删除。",
+      });
+    } catch (error) {
+      console.error("删除报价时出错:", error);
+      toast({
+        title: "删除失败",
+        description:
+          error instanceof Error
+            ? error.message
+            : "删除报价时发生错误，请稍后重试。",
+        variant: "destructive",
+      });
+    }
+  };
+  const handleQuery = async (quotationId: string) => {
+    try {
+      const response = await fetch(`/api/quotations/${quotationId}/query`);
+      if (!response.ok) {
+        throw new Error("查询报价失败");
+      }
+      const data = await response.json();
+      console.log("查询结果:", data);
+
+      // 显示查询结果给用户
+      toast({
+        title: "查询成功",
+        description: "报价信息已成功获取，请查看控制台输出。",
+      });
+    } catch (error) {
+      console.error("查询报价时出错:", error);
+      toast({
+        title: "查询失败",
+        description: "查询报价时发生错误，请稍后重试。",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -551,8 +601,6 @@ export default function QuotationManagement() {
           </DialogContent>
         </Dialog>
       )}
-<<<<<<< HEAD
-=======
       {isCustomerDialogOpen && (
         <Dialog
           open={isCustomerDialogOpen}
@@ -585,7 +633,6 @@ export default function QuotationManagement() {
           </DialogContent>
         </Dialog>
       )}
->>>>>>> main
     </div>
   );
 }
