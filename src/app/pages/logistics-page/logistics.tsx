@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
+import { ChevronLeft, ChevronRight, RefreshCw, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -10,16 +10,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 interface LogisticsInfo {
   orderId: string
   customer: string
-  shippingDate: string
-  estimatedDeliveryDate: string
-  status: string
   tiOrderNumber: string
+  components: LogisticsComponent[]
+}
+
+interface LogisticsComponent {
+  name: string
+  shippingDate: string
+  estimatedDateOfArrival: string
+  //carrierShipmentMasterTrackingNumber: string
+  carrier: string
 }
 
 const fetchLogisticsInfo = async (page: number, searchTerm: string): Promise<{ logisticsInfo: LogisticsInfo[], totalPages: number }> => {
@@ -84,8 +97,7 @@ export default function LogisticsInformation() {
         info.orderId === orderId
           ? {
               ...info,
-              shippingDate: data.shippingDate || info.shippingDate,
-              estimatedDeliveryDate: data.estimatedDeliveryDate || info.estimatedDeliveryDate
+              components: data.components || info.components
             }
           : info
       ));
@@ -109,19 +121,6 @@ export default function LogisticsInformation() {
       title: "读取成功",
       description: "所有物流信息已更新。",
     })
-  }
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "运输中":
-        return <Badge variant="secondary">{status}</Badge>
-      case "已发货":
-        return <Badge variant="default">{status}</Badge>
-      case "已送达":
-        return <Badge variant="secondary">{status}</Badge>
-      default:
-        return <Badge variant="outline">{status}</Badge>
-    }
   }
 
   return (
@@ -149,9 +148,7 @@ export default function LogisticsInformation() {
                 <TableHead>订单ID</TableHead>
                 <TableHead>TI订单号</TableHead>
                 <TableHead>客户</TableHead>
-                <TableHead>发货日期</TableHead>
-                <TableHead>预计送达日期</TableHead>
-                <TableHead>状态</TableHead>
+                <TableHead>详情</TableHead>
                 <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
@@ -161,9 +158,50 @@ export default function LogisticsInformation() {
                   <TableCell>{info.orderId}</TableCell>
                   <TableCell>{info.tiOrderNumber}</TableCell>
                   <TableCell>{info.customer}</TableCell>
-                  <TableCell>{info.shippingDate || '未发货'}</TableCell>
-                  <TableCell>{info.estimatedDeliveryDate || '未知'}</TableCell>
-                  <TableCell>{getStatusBadge(info.status)}</TableCell>
+                  <TableCell>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                        >
+                          <Info className="h-4 w-4 mr-2" />
+                          详情
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px] bg-white">
+                        <DialogHeader>
+                          <DialogTitle>物流详情 - {info.orderId}</DialogTitle>
+                          <DialogDescription>
+                            订单 {info.orderId} 的物流详细信息
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="mt-4">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>元件名称</TableHead>
+                                <TableHead>发货日期</TableHead>
+                                <TableHead>预计到达日期</TableHead>
+                                <TableHead>物流单号</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {info.components.map((component, index) => (
+                                <TableRow key={index}>
+                                  <TableCell>{component.name || '未知'}</TableCell>
+                                  <TableCell>{component.shippingDate || '未发货'}</TableCell>
+                                  <TableCell>{component.estimatedDateOfArrival || '未知'}</TableCell>
+                                  <TableCell>{component.carrier || '无'}</TableCell>
+                                  {/* <TableCell>{component.carrierShipmentMasterTrackingNumber || '无'}</TableCell> */}
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"

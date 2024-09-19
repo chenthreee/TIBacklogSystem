@@ -37,7 +37,11 @@ interface Component {
   status: string
   deliveryDate: string
   quoteNumber: string
-  tiLineItemNumber?: string // 将 tiLineItemNumber 设为可选属性
+  tiLineItemNumber?: string
+  shippingDate?: string
+  estimatedDateOfArrival?: string
+  //carrierShipmentMasterTrackingNumber?: string
+  carrier?: string
 }
 
 export default function OrderManagement() {
@@ -56,6 +60,8 @@ export default function OrderManagement() {
     tiOrderNumber: "",
     orderNumber: "",
     quotationId: "",
+    components: [],
+    totalAmount: 0,
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
@@ -199,6 +205,8 @@ export default function OrderManagement() {
         customer: "",
         status: "处理中",
         quotationId: "",
+        components: [],
+        totalAmount: 0,
       });
 
       toast({
@@ -466,6 +474,42 @@ export default function OrderManagement() {
                   type="date"
                   value={editingComponent.deliveryDate}
                   onChange={(e) => setEditingComponent({...editingComponent, deliveryDate: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-shippingDate" className="text-right">
+                  发货日期
+                </Label>
+                <Input
+                  id="edit-shippingDate"
+                  type="date"
+                  value={editingComponent.shippingDate || ''}
+                  onChange={(e) => setEditingComponent({...editingComponent, shippingDate: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-estimatedDateOfArrival" className="text-right">
+                  预计到达日期
+                </Label>
+                <Input
+                  id="edit-estimatedDateOfArrival"
+                  type="date"
+                  value={editingComponent.estimatedDateOfArrival || ''}
+                  onChange={(e) => setEditingComponent({...editingComponent, estimatedDateOfArrival: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-trackingNumber" className="text-right">
+                  物流单号
+                </Label>
+                <Input
+                  id="edit-trackingNumber"
+                  type="text"
+                  value={editingComponent.carrierShipmentMasterTrackingNumber || ''}
+                  onChange={(e) => setEditingComponent({...editingComponent, carrierShipmentMasterTrackingNumber: e.target.value})}
                   className="col-span-3"
                 />
               </div>

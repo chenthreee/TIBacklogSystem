@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const orders = await Order.find(query)
-      .select('orderNumber customer status tiOrderNumber')
+      .select('orderNumber customer status tiOrderNumber components')
       .skip(skip)
       .limit(limit)
 
@@ -32,11 +32,17 @@ export async function GET(req: NextRequest) {
     const logisticsInfo = orders.map(order => ({
       orderId: order.orderNumber,
       customer: order.customer,
-      shippingDate: '', // 暂时留空
-      estimatedDeliveryDate: '', // 暂时留空
       status: order.status,
-      tiOrderNumber: order.tiOrderNumber
-    }))
+      tiOrderNumber: order.tiOrderNumber,
+      components: order.components.map((component: any) => ({
+        name: component.tiPartNumber || component.name || '未知', // 添加 fallback
+        shippingDate: component.shippingDate || '',
+        estimatedDateOfArrival: component.estimatedDateOfArrival || '',
+        carrierShipmentMasterTrackingNumber: component.carrier || ''
+        //carrierShipmentMasterTrackingNumber: component.carrierShipmentMasterTrackingNumber || ''
+      }))
+    }));
+    
 
     return NextResponse.json({ logisticsInfo, totalPages }, { status: 200 })
   } catch (error) {

@@ -64,6 +64,8 @@ export async function POST(req: NextRequest) {
       totalAmount,
       estimatedDeliveryDate: '',
       shippingDate: '',
+      carrier:''
+      //carrierShipmentMasterTrackingNumber:''
     })
     const savedOrder = await newOrder.save()
 
