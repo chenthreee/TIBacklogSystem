@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Pencil, Trash2, Send, Search } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil, Trash2, Send, Search, Plus } from "lucide-react";
 
 interface QuotationTableProps {
   quotations: any[];
@@ -11,6 +11,7 @@ interface QuotationTableProps {
   handleDeleteQuotation: (id: string) => void;
   handleEditComponent: (quotationId: number, component: any) => void;
   handleDeleteComponent: (quotationId: string, componentId: string) => void;
+  handleAddComponent: (quotationId: string) => void;
 }
 
 function QuotationTable({
@@ -21,7 +22,8 @@ function QuotationTable({
   handleQuery,
   handleDeleteQuotation,
   handleEditComponent,
-  handleDeleteComponent
+  handleDeleteComponent,
+  handleAddComponent
 }: QuotationTableProps) {
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -84,6 +86,14 @@ function QuotationTable({
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       删除
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleAddComponent(quotation.id)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      添加组件
                     </Button>
                   </div>
                 </TableCell>

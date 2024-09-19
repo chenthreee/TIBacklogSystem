@@ -1,38 +1,12 @@
 import { useState, useEffect } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  Pencil,
-  Trash2,
-  Send,
-  Search,
-} from "lucide-react";
 import * as XLSX from "xlsx";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast"
 import SearchAndImport from './components/SearchAndImport';
 import QuotationTable from './components/QuotationTable';
 import Pagination from './components/Pagination';
 import EditComponentDialog from './components/EditComponentDialog';
 import CustomerNameDialog from './components/CustomerNameDialog';
+import AddComponentDialog from './components/AddComponentDialog';
 
 // 定义Quotation类型
 interface Quotation {
@@ -82,6 +56,8 @@ const fetchQuotations = async (page: number, searchTerm: string) => {
       startIndex + pageSize
     );
 
+    console.log("Paginated quotations:", JSON.stringify(paginatedQuotations, null, 2)); // 添加这行
+
     return {
       quotations: paginatedQuotations,
       //totalPages: Math.ceil(filteredQuotations.length / pageSize)
@@ -104,6 +80,9 @@ export default function QuotationManagement() {
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const { toast } = useToast()
+  const [isAddComponentDialogOpen, setIsAddComponentDialogOpen] = useState(false);
+  const [currentQuotationId, setCurrentQuotationId] = useState<string | null>(null);
+
   useEffect(() => {
     fetchData();
   }, [currentPage, searchTerm]);
@@ -363,6 +342,81 @@ export default function QuotationManagement() {
     }
   };
 
+  const handleCreateNewQuotation = async () => {
+    try {
+      const response = await fetch("/api/quotations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          date: new Date().toISOString().split("T")[0],
+          customer: "新客户",
+          totalAmount: 0,
+          components: [],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("创建新报价失败");
+      }
+
+      const newQuotation = await response.json();
+      setQuotations([...quotations, newQuotation]);
+      toast({
+        title: "新报价已创建",
+        description: "新的报价单已成功添加到列表中。",
+      });
+    } catch (error) {
+      console.error("创建新报价时出错:", error);
+      toast({
+        title: "创建失败",
+        description: "创建新报价时发生错误，请稍后重试。",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddComponent = async (quotationId: string) => {
+    console.log('handleAddComponent called with quotationId:', quotationId); // 添加这行
+    setCurrentQuotationId(quotationId);
+    setIsAddComponentDialogOpen(true);
+  };
+
+  const handleAddComponentSubmit = async (newComponent: any) => {
+    if (!currentQuotationId) return;
+
+    try {
+      console.log('Sending request to:', `/api/quotations/${currentQuotationId}/newItem`); // 添加日志
+      const response = await fetch(`/api/quotations/${currentQuotationId}/newItem`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newComponent),
+      });
+
+      if (!response.ok) {
+        throw new Error("添加组件失败");
+      }
+
+      const updatedQuotation = await response.json();
+      setQuotations(quotations.map(q => q.id === currentQuotationId ? updatedQuotation : q));
+      setIsAddComponentDialogOpen(false);  // 关闭对话框
+      toast({
+        title: "组件已添加",
+        description: "新的组件已成功添加到报价单中。",
+      });
+    } catch (error) {
+      console.error("添加组件时出错:", error);
+      toast({
+        title: "添加失败",
+        description: "添加组件时发生错误，请稍后重试。",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <SearchAndImport
@@ -370,6 +424,7 @@ export default function QuotationManagement() {
         handleSearch={handleSearch}
         handleFileUpload={handleFileUpload}
         triggerFileInput={triggerFileInput}
+        handleCreateNewQuotation={handleCreateNewQuotation}
       />
 
       {isLoading ? (
@@ -384,6 +439,7 @@ export default function QuotationManagement() {
           handleDeleteQuotation={handleDeleteQuotation}
           handleEditComponent={handleEditComponent}
           handleDeleteComponent={handleDeleteComponent}
+          handleAddComponent={handleAddComponent}
         />
       )}
 
@@ -405,6 +461,12 @@ export default function QuotationManagement() {
         customerName={customerName}
         setCustomerName={setCustomerName}
         handleSubmit={handleCustomerDialogSubmit}
+      />
+
+      <AddComponentDialog
+        isOpen={isAddComponentDialogOpen}
+        setIsOpen={setIsAddComponentDialogOpen}
+        handleAddComponent={handleAddComponentSubmit}
       />
     </div>
   );
