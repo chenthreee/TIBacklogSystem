@@ -72,7 +72,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
               <TableCell>{order._id}</TableCell>
               <TableCell>{order.date}</TableCell>
               <TableCell>{order.customer}</TableCell>
-              <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
+              <TableCell>${(order.totalAmount ?? 0).toFixed(2)}</TableCell>
               <TableCell>{order.status}</TableCell>
               <TableCell>
                 <div className="flex space-x-2">
