@@ -28,6 +28,8 @@ interface Component {
   unitPrice: number;
   status: string;
   deliveryDate: string;
+  quoteNumber: string
+  tiLineItemNumber?: string // 将 tiLineItemNumber 设为可选属性
 }
 
 interface OrderTableProps {

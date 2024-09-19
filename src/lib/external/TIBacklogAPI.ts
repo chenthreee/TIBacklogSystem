@@ -1,5 +1,12 @@
 import APIAccessor from './apiAccessor';
 
+const API_ENV = process.env.NEXT_PUBLIC_API_ENV || 'development';
+
+// 根据环境变量决定是否使用测试endpoint
+const getEndpoint = (endpoint: string) => {
+  return API_ENV === 'production' ? endpoint.replace('/test', '') : endpoint;
+};
+
 // 发票API
 export class TIBacklogInvoice {
   private api: APIAccessor;
@@ -12,25 +19,25 @@ export class TIBacklogInvoice {
 
   // 按订单号获取发票
   async retrieveByOrderNumber(orderNumber: string, requestPdf = false): Promise<any> {
-    const url = `${this.server}/v2/backlog/financial-documents/test?orderNumber=${orderNumber}&requestInvoicePDF=${requestPdf}`;
+    const url = getEndpoint(`${this.server}/v2/backlog/financial-documents/test?orderNumber=${orderNumber}&requestInvoicePDF=${requestPdf}`);
     return this.api.get(url);
   }
 
   // 按客户订单号获取发票
   async retrieveByCustomerOrderNumber(orderNumber: string, requestPdf = false): Promise<any> {
-    const url = `${this.server}/v2/backlog/financial-documents/test?customerPurchaseOrderNumber=${orderNumber}&requestInvoicePDF=${requestPdf}`;
+    const url = getEndpoint(`${this.server}/v2/backlog/financial-documents/test?customerPurchaseOrderNumber=${orderNumber}&requestInvoicePDF=${requestPdf}`);
     return this.api.get(url);
   }
 
   // 按发货号获取发票
   async retrieveByDeliveryNumber(deliveryNumber: string, requestPdf = false): Promise<any> {
-    const url = `${this.server}/v2/backlog/financial-documents/test?deliveryNumber=${deliveryNumber}&requestInvoicePDF=${requestPdf}`;
+    const url = getEndpoint(`${this.server}/v2/backlog/financial-documents/test?deliveryNumber=${deliveryNumber}&requestInvoicePDF=${requestPdf}`);
     return this.api.get(url);
   }
 
   // 按财务文件号获取发票
   async retrieveByDocumentNumber(documentNumber: string, requestPdf = false): Promise<any> {
-    const url = `${this.server}/v2/backlog/financial-documents/test?financialDocumentNumber=${documentNumber}&requestInvoicePDF=${requestPdf}`;
+    const url = getEndpoint(`${this.server}/v2/backlog/financial-documents/test?financialDocumentNumber=${documentNumber}&requestInvoicePDF=${requestPdf}`);
     return this.api.get(url);
   }
 }
@@ -47,19 +54,19 @@ export class TIBacklogASN {
 
   // 按订单号获取ASN
   async retrieveByOrderNumber(orderNumber: string, requestInvoicePdf = false, requestWaybillPdf = false): Promise<any> {
-    const url = `${this.server}/v2/backlog/advanced-shipment-notices/test?orderNumber=${orderNumber}&requestCommercialInvoicePDF=${requestInvoicePdf}&requestWaybillPDF=${requestWaybillPdf}`;
+    const url = getEndpoint(`${this.server}/v2/backlog/advanced-shipment-notices/test?orderNumber=${orderNumber}&requestCommercialInvoicePDF=${requestInvoicePdf}&requestWaybillPDF=${requestWaybillPdf}`);
     return this.api.get(url);
   }
 
   // 按客户订单号获取ASN
   async retrieveByCustomerOrderNumber(orderNumber: string, requestInvoicePdf = false, requestWaybillPdf = false): Promise<any> {
-    const url = `${this.server}/v2/backlog/advanced-shipment-notices/test?customerPurchaseOrderNumber=${orderNumber}&requestCommercialInvoicePDF=${requestInvoicePdf}&requestWaybillPDF=${requestWaybillPdf}`;
+    const url = getEndpoint(`${this.server}/v2/backlog/advanced-shipment-notices/test?customerPurchaseOrderNumber=${orderNumber}&requestCommercialInvoicePDF=${requestInvoicePdf}&requestWaybillPDF=${requestWaybillPdf}`);
     return this.api.get(url);
   }
 
   // 按提单号获取ASN
   async retrieveByWaybillNumber(waybillNumber: string, requestInvoicePdf = false, requestWaybillPdf = false): Promise<any> {
-    const url = `${this.server}/v2/backlog/advanced-shipment-notices/test?wayBillNumber=${waybillNumber}&requestCommercialInvoicePDF=${requestInvoicePdf}&requestWaybillPDF=${requestWaybillPdf}`;
+    const url = getEndpoint(`${this.server}/v2/backlog/advanced-shipment-notices/test?wayBillNumber=${waybillNumber}&requestCommercialInvoicePDF=${requestInvoicePdf}&requestWaybillPDF=${requestWaybillPdf}`);
     return this.api.get(url);
   }
 }
@@ -76,7 +83,7 @@ export class TIBacklogRemittance {
 
   // 发送汇款建议
   async postRemittance(adviceNumber: string, lineItems: any[], currencyCode = 'USD'): Promise<any> {
-    const url = `${this.server}/v2/backlog/remittance-advice/test`;
+    const url = getEndpoint(`${this.server}/v2/backlog/remittance-advice/test`);
     const data = {
       remittanceAdviceNumber: adviceNumber,
       currencyCode: currencyCode,
@@ -113,7 +120,7 @@ export class TIBacklogQuotes {
       return;
     }
 
-    const url = `${this.server}/v2/backlog/quotes/test`;
+    const url = getEndpoint(`${this.server}/v2/backlog/quotes/test`);
     const data = {
       quote: {
         endCustomerCompanyName: customerName,
@@ -127,7 +134,7 @@ export class TIBacklogQuotes {
 
   // 获取报价
   async getQuote(quoteNumber: string): Promise<any> {
-    const url = `${this.server}/v2/backlog/quotes/test?quoteNumber=${quoteNumber}`;
+    const url = getEndpoint(`${this.server}/v2/backlog/quotes/test?quoteNumber=${quoteNumber}`);
     return this.api.get(url);
   }
 }
@@ -164,7 +171,7 @@ export class TIBacklogOrders {
 
   // 提交订单
   async postOrder(customerName: string, customerOrderNumber: string, shipTo: string): Promise<any> {
-    const url = `${this.server}/v2/backlog/orders/test`;
+    const url = getEndpoint(`${this.server}/v2/backlog/orders/test`);
     const data = {
       order: {
         endCustomerCompanyName: customerName,
@@ -179,7 +186,7 @@ export class TIBacklogOrders {
 
   // 修改订单
   async changeOrder(customerName: string, customerOrderNumber: string, shipTo: string, lineItems: any[]): Promise<any> {
-    const url = `${this.server}/v2/backlog/orders/changeByCustomerPurchaseOrderNumber/test`;
+    const url = getEndpoint(`${this.server}/v2/backlog/orders/changeByCustomerPurchaseOrderNumber/test`);
     const data = {
       order: {
         endCustomerCompanyName: customerName,
@@ -194,13 +201,13 @@ export class TIBacklogOrders {
 
   // 通过供应商订单号获取订单
   async retrieveOrderBySupplierNumber(supplierOrderNumber: string): Promise<any> {
-    const url = `${this.server}/v2/backlog/orders/test?orderNumber=${supplierOrderNumber}`;
+    const url = getEndpoint(`${this.server}/v2/backlog/orders/test?orderNumber=${supplierOrderNumber}`);
     return this.api.get(url);
   }
 
   // 通过客户订单号获取订单
   async retrieveOrderByCustomerNumber(customerOrderNumber: string): Promise<any> {
-    const url = `${this.server}/v2/backlog/orders/test?customerPurchaseOrderNumber=${customerOrderNumber}`;
+    const url = getEndpoint(`${this.server}/v2/backlog/orders/test?customerPurchaseOrderNumber=${customerOrderNumber}`);
     return this.api.get(url);
   }
 }

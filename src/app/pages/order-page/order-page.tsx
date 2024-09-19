@@ -386,8 +386,6 @@ export default function OrderManagement() {
         setIsCreateOrderDialogOpen={setIsCreateOrderDialogOpen}
         newOrder={newOrder as Order}
         setNewOrder={setNewOrder}
-        fileInputRef={fileInputRef}
-        handleFileUpload={handleFileUpload}
         handleCreateOrder={handleCreateOrder}
       />
 
