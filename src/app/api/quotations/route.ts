@@ -38,8 +38,6 @@ export async function GET() {
       })) : []
     }));
 
-    console.log('Formatted quotations:', JSON.stringify(formattedQuotations, null, 3));
-
     return NextResponse.json(formattedQuotations);
   } catch (error) {
     console.error('Error in GET /api/quotations:', error);
