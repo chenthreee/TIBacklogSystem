@@ -4,7 +4,6 @@ import {
   ChevronUp,
   Pencil,
   Trash2,
-  Upload,
   Send,
   Search,
 } from "lucide-react";
@@ -29,6 +28,11 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast"
+import SearchAndImport from './components/SearchAndImport';
+import QuotationTable from './components/QuotationTable';
+import Pagination from './components/Pagination';
+import EditComponentDialog from './components/EditComponentDialog';
+import CustomerNameDialog from './components/CustomerNameDialog';
 
 // 定义Quotation类型
 interface Quotation {
@@ -361,285 +365,47 @@ export default function QuotationManagement() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <Input
-          type="text"
-          placeholder="搜索客户或日期..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="max-w-sm"
-        />
-        <div>
-          <input
-            type="file"
-            id="excel-upload"
-            className="hidden"
-            accept=".xlsx, .xls"
-            onChange={handleFileUpload}
-          />
-          <label htmlFor="excel-upload">
-            <Button variant="outline" onClick={triggerFileInput}>
-              <Upload className="mr-2 h-4 w-4" /> 从Excel导入报价
-            </Button>
-          </label>
-        </div>
-      </div>
+      <SearchAndImport
+        searchTerm={searchTerm}
+        handleSearch={handleSearch}
+        handleFileUpload={handleFileUpload}
+        triggerFileInput={triggerFileInput}
+      />
 
       {isLoading ? (
         <div>加载中...</div>
       ) : (
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>报价ID</TableHead>
-                <TableHead>日期</TableHead>
-                <TableHead>客户</TableHead>
-                <TableHead>总金额</TableHead>
-                <TableHead>状态</TableHead>
-                <TableHead>操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {quotations.map((quotation) => (
-                <>
-                  <TableRow key={quotation.id}>
-                    <TableCell>{quotation.id}</TableCell>
-                    <TableCell>{quotation.date}</TableCell>
-                    <TableCell>{quotation.customer}</TableCell>
-                    <TableCell>${quotation.totalAmount.toFixed(2)}</TableCell>
-                    <TableCell>{quotation.status}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleExpand(quotation.id)}
-                        >
-                          {expandedQuotations.includes(quotation.id) ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                          {expandedQuotations.includes(quotation.id)
-                            ? "收起"
-                            : "展开"}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSendToTI(quotation.id)}
-                        >
-                          <Send className="h-4 w-4 mr-2" />
-                          向TI发送报价
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleQuery(quotation.id)}
-                        >
-                          <Search className="h-4 w-4 mr-2" />
-                          查询
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteQuotation(quotation.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          删除
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  {expandedQuotations.includes(quotation.id) && (
-                    <TableRow>
-                      <TableCell colSpan={6}>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>元件名称</TableHead>
-                              <TableHead>数量</TableHead>
-                              <TableHead>报价</TableHead>
-                              <TableHead>TI返回价格</TableHead>
-                              <TableHead>小计</TableHead>
-                              <TableHead>状态</TableHead>
-                              <TableHead>操作</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {quotation.components.map(
-                              (component: Component) => (
-                                <TableRow key={component.id}>
-                                  <TableCell>{component.name}</TableCell>
-                                  <TableCell>{component.quantity}</TableCell>
-                                  <TableCell>
-                                    ${component.unitPrice.toFixed(2)}
-                                  </TableCell>
-                                  <TableCell>
-                                    ${component.tiPrice}
-                                  </TableCell>
-                                  <TableCell>
-                                    $
-                                    {(
-                                      component.quantity * component.unitPrice
-                                    ).toFixed(2)}
-                                  </TableCell>
-                                  <TableCell>{component.status}</TableCell>
-                                  <TableCell>
-                                    <div className="flex space-x-2">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleEditComponent(
-                                            quotation.id,
-                                            component
-                                          )
-                                        }
-                                      >
-                                        <Pencil className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleDeleteComponent(
-                                            quotation.id,
-                                            component.id
-                                          )
-                                        }
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              )
-                            )}
-                          </TableBody>
-                        </Table>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <QuotationTable
+          quotations={quotations}
+          expandedQuotations={expandedQuotations}
+          toggleExpand={toggleExpand}
+          handleSendToTI={handleSendToTI}
+          handleQuery={handleQuery}
+          handleDeleteQuotation={handleDeleteQuotation}
+          handleEditComponent={handleEditComponent}
+          handleDeleteComponent={handleDeleteComponent}
+        />
       )}
 
-      <div className="flex justify-between items-center mt-4">
-        <Button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-        >
-          上一页
-        </Button>
-        <span>
-          第 {currentPage} 页，共 {totalPages} 页
-        </span>
-        <Button
-          onClick={() =>
-            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-          }
-          disabled={currentPage === totalPages}
-        >
-          下一页
-        </Button>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        setCurrentPage={setCurrentPage}
+      />
 
-      {editingComponent && (
-        <Dialog
-          open={!!editingComponent}
-          onOpenChange={() => setEditingComponent(null)}
-        >
-          <DialogContent className="sm:max-w-[425px] bg-white">
-            {" "}
-            {/* 添加背景颜色 */}
-            <DialogHeader>
-              <DialogTitle>编辑元件</DialogTitle>
-              <DialogDescription>
-                修改元件的详细信息。完成后点击保存。
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-quantity" className="text-right">
-                  数量
-                </Label>
-                <Input
-                  id="edit-quantity"
-                  type="number"
-                  value={editingComponent.quantity}
-                  onChange={(e) =>
-                    setEditingComponent({
-                      ...editingComponent,
-                      quantity: parseInt(e.target.value),
-                    })
-                  }
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-unitPrice" className="text-right">
-                  单价
-                </Label>
-                <Input
-                  id="edit-unitPrice"
-                  type="number"
-                  step="0.01"
-                  value={editingComponent.unitPrice}
-                  onChange={(e) =>
-                    setEditingComponent({
-                      ...editingComponent,
-                      unitPrice: parseFloat(e.target.value),
-                    })
-                  }
-                  className="col-span-3"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={() => handleSaveComponent(editingComponent)}>
-                保存更改
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-      {isCustomerDialogOpen && (
-        <Dialog
-          open={isCustomerDialogOpen}
-          onOpenChange={() => setIsCustomerDialogOpen(false)}
-        >
-          <DialogContent className="sm:max-w-[425px] bg-white">
-            <DialogHeader>
-              <DialogTitle>输入客户名称</DialogTitle>
-              <DialogDescription>
-                请输入客户名称，然后点击确认继续上传文件。
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="customer-name" className="text-right">
-                  客户名称
-                </Label>
-                <Input
-                  id="customer-name"
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="col-span-3"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleCustomerDialogSubmit}>确认</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      <EditComponentDialog
+        editingComponent={editingComponent}
+        setEditingComponent={setEditingComponent}
+        handleSaveComponent={handleSaveComponent}
+      />
+
+      <CustomerNameDialog
+        isOpen={isCustomerDialogOpen}
+        setIsOpen={setIsCustomerDialogOpen}
+        customerName={customerName}
+        setCustomerName={setCustomerName}
+        handleSubmit={handleCustomerDialogSubmit}
+      />
     </div>
   );
 }
