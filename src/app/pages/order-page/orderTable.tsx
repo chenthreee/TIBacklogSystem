@@ -19,6 +19,7 @@ interface Order {
   status: string;
   components: Component[];
   tiOrderNumber: string;
+  purchaseOrderNumber: string;
 }
 
 interface Component {
@@ -30,6 +31,9 @@ interface Component {
   deliveryDate: string;
   quoteNumber: string
   tiLineItemNumber?: string // 将 tiLineItemNumber 设为可选属性
+  k3Code: string;
+  type: string;
+  description: string;
 }
 
 interface OrderTableProps {

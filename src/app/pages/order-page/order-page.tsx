@@ -26,6 +26,7 @@ interface Order {
   orderNumber: string
   tiOrderNumber: string
   quotationId: string
+  purchaseOrderNumber: string
   components: Component[]
 }
 
@@ -42,6 +43,9 @@ interface Component {
   estimatedDateOfArrival?: string
   //carrierShipmentMasterTrackingNumber?: string
   carrier?: string
+  k3Code: string
+  type: string
+  description: string
 }
 
 export default function OrderManagement() {
@@ -60,9 +64,11 @@ export default function OrderManagement() {
     tiOrderNumber: "",
     orderNumber: "",
     quotationId: "",
+    purchaseOrderNumber: "",
     components: [],
     totalAmount: 0,
   })
+  const [excelData, setExcelData] = useState<any[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
@@ -184,14 +190,56 @@ export default function OrderManagement() {
     }
   }
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const sheetName = workbook.SheetNames[0]
+        const worksheet = workbook.Sheets[sheetName]
+        const json = XLSX.utils.sheet_to_json(worksheet)
+        setExcelData(json);
+      }
+      reader.readAsArrayBuffer(file)
+    }
+  }
+
   const handleCreateOrder = async () => {
     try {
+      // 首先获取报价单信息
+      const quotationResponse = await fetch(`/api/quotations/${newOrder.quotationId}`);
+      const quotationData = await quotationResponse.json();
+
+      if (!quotationData.success) {
+        throw new Error('获取报价单失败');
+      }
+
+      // 将报价单中的组件与Excel数据进行匹配
+      const matchedComponents = quotationData.quotation.components.map((component: any) => {
+        const excelMatch = excelData.find((row: any) => row['规格描述'].includes(component.name));
+        return {
+          ...component,
+          k3Code: excelMatch ? excelMatch['K3编码'] : '',
+          type: excelMatch ? excelMatch['类型'] : '',
+          description: excelMatch ? excelMatch['规格描述'] : '',
+        };
+      });
+
+
+      const orderData = {
+        ...newOrder,
+        components: matchedComponents,
+        totalAmount: matchedComponents.reduce((sum: number, comp: any) => sum + (comp.quantity * comp.unitPrice), 0),
+      };
+
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newOrder),
+        body: JSON.stringify(orderData),
       });
 
       if (!response.ok) {
@@ -205,9 +253,11 @@ export default function OrderManagement() {
         customer: "",
         status: "处理中",
         quotationId: "",
+        purchaseOrderNumber: "",
         components: [],
         totalAmount: 0,
       });
+      setExcelData([]);
 
       toast({
         title: "订单已创建",
@@ -220,40 +270,6 @@ export default function OrderManagement() {
         description: "创建订单失败，请稍后重试。",
         variant: "destructive",
       });
-    }
-  }
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer)
-        const workbook = XLSX.read(data, { type: 'array' })
-        const sheetName = workbook.SheetNames[0]
-        const worksheet = workbook.Sheets[sheetName]
-        const json = XLSX.utils.sheet_to_json(worksheet)
-        
-        const components = json.map((row: any, index) => ({
-          id: `COMP${index + 1}`,
-          name: row['元件名称'],
-          quantity: row['数量'],
-          unitPrice: row['单价'],
-          status: '待采购',
-          deliveryDate: row['交期'] ? new Date((row['交期'] - 25569) * 86400 * 1000).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          tiLineItemNumber: '',
-          quoteNumber: ''
-        }))
-
-        const totalAmount = components.reduce((sum, comp) => sum + comp.quantity * comp.unitPrice, 0)
-
-        setNewOrder(prev => ({
-          ...prev,
-          components,
-          totalAmount,
-        }))
-      }
-      reader.readAsArrayBuffer(file)
     }
   }
 
@@ -395,6 +411,7 @@ export default function OrderManagement() {
         newOrder={newOrder as Order}
         setNewOrder={setNewOrder}
         handleCreateOrder={handleCreateOrder}
+        handleFileUpload={handleFileUpload}
       />
 
       {isLoading ? (

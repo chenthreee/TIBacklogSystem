@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Order from '@/models/Order'
-import Quotation from '@/models/Quotation' // 假设你有一个Quotation模型
 
 export async function GET(req: NextRequest) {
   await dbConnect()
@@ -37,41 +36,29 @@ export async function POST(req: NextRequest) {
 
   try {
     const orderData = await req.json()
+    console.log('原始 orderData:', orderData);
 
-    // 根据报价ID获取报价信息
-    const quotation = await Quotation.findById(orderData.quotationId)
-    if (!quotation) {
-      return NextResponse.json({ success: false, error: '未找到对应的报价' }, { status: 404 })
-    }
+    // 处理组件,将 tiPrice 作为 unitPrice
+    const processedComponents = orderData.components.map((component: any) => ({
+      ...component,
+      unitPrice: component.tiPrice || component.unitPrice, // 优先使用 tiPrice,如果不存在则使用 unitPrice
+    }));
 
-    // 使用 tiPrice 作为订单中 component 的 unitPrice，并确保所有值都是有效的数字
-    const components = quotation.components.map((comp: any) => ({
-      ...comp,
-      quantity: Number(comp.quantity) || 0,
-      unitPrice: Number(comp.tiPrice) || Number(comp.unitPrice) || 0,
-      quoteNumber: quotation.quoteNumber, // 添加报价单号
-    }))
-
-    // 重新计算总金额，确保不会出现 NaN
-    const totalAmount = components.reduce((sum: number, comp: any) => {
-      const itemTotal = comp.quantity * comp.unitPrice
-      return sum + (isNaN(itemTotal) ? 0 : itemTotal)
-    }, 0)
+    // 重新计算总金额
+    const totalAmount = processedComponents.reduce((sum: number, comp: any) => {
+      return sum + (comp.quantity * comp.unitPrice);
+    }, 0);
 
     const newOrder = new Order({
       ...orderData,
-      components,
-      totalAmount,
-      estimatedDeliveryDate: '',
-      shippingDate: '',
-      carrier:''
-      //carrierShipmentMasterTrackingNumber:''
+      components: processedComponents,
+      totalAmount: totalAmount,
+      orderNumber: orderData.purchaseOrderNumber, // 使用采购订单号作为订单号
     })
-    const savedOrder = await newOrder.save()
 
-    // 使用保存后的 ID 更新 orderNumber
-    savedOrder.orderNumber = savedOrder._id.toString()
-    await savedOrder.save()
+    console.log('处理后的 newOrder:', newOrder);
+
+    const savedOrder = await newOrder.save()
 
     return NextResponse.json({ success: true, order: savedOrder }, { status: 201 })
   } catch (error) {

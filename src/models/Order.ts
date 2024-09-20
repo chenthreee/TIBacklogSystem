@@ -7,12 +7,14 @@ const ComponentSchema = new mongoose.Schema({
   unitPrice: Number,
   status: String,
   deliveryDate: String,
-  tiLineItemNumber: String, // 新增字段
-  quoteNumber: String, // 新增字段
-  shippingDate: String, // 新增字段
-  estimatedDateOfArrival: String, // 新增字段
-  //carrierShipmentMasterTrackingNumber: String,
+  tiLineItemNumber: String,
+  quoteNumber: String,
+  shippingDate: String,
+  estimatedDateOfArrival: String,
   carrier: String,
+  k3Code: String, // 新增字段
+  type: String, // 新增字段
+  description: String // 新增字段
 });
 
 const OrderSchema = new mongoose.Schema({
@@ -23,7 +25,8 @@ const OrderSchema = new mongoose.Schema({
   orderNumber: String,
   tiOrderNumber: String,
   components: [ComponentSchema],
-  quotationId: String, // 如果之前没有，也需要添加这个字段
+  quotationId: String,
+  purchaseOrderNumber: String // 新增字段
 });
 
 const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);

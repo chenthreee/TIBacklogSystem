@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,10 +11,12 @@ interface CreateOrderDialogProps {
     customer: string;
     date: string;
     status: string;
-    quotationId: string; // 新增字段
+    quotationId: string;
+    purchaseOrderNumber: string; // 新增字段
   };
   setNewOrder: React.Dispatch<React.SetStateAction<any>>;
   handleCreateOrder: () => void;
+  handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
@@ -23,13 +25,16 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
   newOrder,
   setNewOrder,
   handleCreateOrder,
+  handleFileUpload,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   return (
     <Dialog open={isCreateOrderDialogOpen} onOpenChange={setIsCreateOrderDialogOpen}>
       <DialogContent className="sm:max-w-[425px] bg-white">
         <DialogHeader>
           <DialogTitle>创建新订单</DialogTitle>
-          <DialogDescription>填写订单信息并输入报价ID以导入元件信息。</DialogDescription>
+          <DialogDescription>填写订单信息并上传Excel文件。</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -66,6 +71,26 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
               id="quotationId"
               value={newOrder.quotationId}
               onChange={(e) => setNewOrder({ ...newOrder, quotationId: e.target.value })}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="purchaseOrderNumber" className="text-right">采购订单号</Label>
+            <Input
+              id="purchaseOrderNumber"
+              value={newOrder.purchaseOrderNumber}
+              onChange={(e) => setNewOrder({ ...newOrder, purchaseOrderNumber: e.target.value })}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="excelUpload" className="text-right">上传Excel</Label>
+            <Input
+              id="excelUpload"
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={handleFileUpload}
+              ref={fileInputRef}
               className="col-span-3"
             />
           </div>
