@@ -216,17 +216,27 @@ export default function OrderManagement() {
         throw new Error('获取报价单失败');
       }
 
-      // 将报价单中的组件与Excel数据进行匹配
-      const matchedComponents = quotationData.quotation.components.map((component: any) => {
-        const excelMatch = excelData.find((row: any) => row['规格描述'].includes(component.name));
-        return {
-          ...component,
-          k3Code: excelMatch ? excelMatch['K3编码'] : '',
-          type: excelMatch ? excelMatch['类型'] : '',
-          description: excelMatch ? excelMatch['规格描述'] : '',
-          quoteNumber: quotationData.quotation.quoteNumber // 添加报价单号
-        };
-      });
+      // 将报价单中的组件与Excel数据进行匹配,只保留能在Excel中找到的组件
+      const matchedComponents = quotationData.quotation.components
+        .map((component: any) => {
+          const excelMatch = excelData.find((row: any) => row['规格描述'].includes(component.name));
+          if (excelMatch) {
+            return {
+              ...component,
+              k3Code: excelMatch['K3编码'],
+              type: excelMatch['类型'],
+              description: excelMatch['规格描述'],
+              quoteNumber: quotationData.quotation.quoteNumber // 添加报价单号
+            };
+          }
+          return null; // 如果没有匹配,返回null
+        })
+        .filter((component: any) => component !== null); // 过滤掉所有null值
+
+      // 如果没有匹配的组件,抛出错误
+      if (matchedComponents.length === 0) {
+        throw new Error('没有找到匹配的组件');
+      }
 
       const orderData = {
         ...newOrder,
@@ -491,42 +501,6 @@ export default function OrderManagement() {
                   type="date"
                   value={editingComponent.deliveryDate}
                   onChange={(e) => setEditingComponent({...editingComponent, deliveryDate: e.target.value})}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-shippingDate" className="text-right">
-                  发货日期
-                </Label>
-                <Input
-                  id="edit-shippingDate"
-                  type="date"
-                  value={editingComponent.shippingDate || ''}
-                  onChange={(e) => setEditingComponent({...editingComponent, shippingDate: e.target.value})}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-estimatedDateOfArrival" className="text-right">
-                  预计到达日期
-                </Label>
-                <Input
-                  id="edit-estimatedDateOfArrival"
-                  type="date"
-                  value={editingComponent.estimatedDateOfArrival || ''}
-                  onChange={(e) => setEditingComponent({...editingComponent, estimatedDateOfArrival: e.target.value})}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-trackingNumber" className="text-right">
-                  物流单号
-                </Label>
-                <Input
-                  id="edit-trackingNumber"
-                  type="text"
-                  value={editingComponent.carrierShipmentMasterTrackingNumber || ''}
-                  onChange={(e) => setEditingComponent({...editingComponent, carrierShipmentMasterTrackingNumber: e.target.value})}
                   className="col-span-3"
                 />
               </div>
