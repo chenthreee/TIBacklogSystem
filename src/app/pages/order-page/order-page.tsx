@@ -480,19 +480,6 @@ export default function OrderManagement() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-unitPrice" className="text-right">
-                  单价
-                </Label>
-                <Input
-                  id="edit-unitPrice"
-                  type="number"
-                  step="0.01"
-                  value={editingComponent.unitPrice}
-                  onChange={(e) => setEditingComponent({...editingComponent, unitPrice: parseFloat(e.target.value)})}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-deliveryDate" className="text-right">
                   交期
                 </Label>
