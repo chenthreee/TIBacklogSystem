@@ -28,48 +28,59 @@ export async function GET(
     // 查询 TI ASN
     const tiResponse = await asnAPI.retrieveByCustomerOrderNumber(order.orderNumber)
 
-    // 打印完整的响应，包括嵌套内容
     console.log('TI ASN API 响应:', JSON.stringify(tiResponse, null, 2))
 
-    // 提取预计到达日期和发货日期
-    const consolidatedInfo = tiResponse.data.consolidatedInformation[0]
+    // 创建一个映射来存储所有的 itemDetails
+    const itemDetailsMap = new Map()
 
-    // 确保 consolidatedInfo 和 bookingOrderDetails 存在
-    if (!consolidatedInfo || !consolidatedInfo.bookingOrderDetails) {
-      console.error('TI ASN API 响应中缺少 bookingOrderDetails')
-      return NextResponse.json({ error: 'TI ASN API 响应中缺少 bookingOrderDetails' }, { status: 500 })
-    }
+    // 处理所有的 consolidatedInformation
+    tiResponse.data.consolidatedInformation.forEach((consolidatedInfo: any) => {
+      //console.error('consolidatedInfo:', JSON.stringify(consolidatedInfo, null, 2))
 
-    const bookingOrderDetails = consolidatedInfo.bookingOrderDetails
+      if (!consolidatedInfo.bookingOrderDetails) {
+        console.error('TI ASN API 响应中缺少 bookingOrderDetails')
+        return // 跳过这个 consolidatedInfo
+      }
 
-    // 打印 bookingOrderDetails 以调试
-    console.log('bookingOrderDetails:', JSON.stringify(bookingOrderDetails, null, 2))
+      // 遍历所有的 bookingOrderDetails
+      consolidatedInfo.bookingOrderDetails.forEach((booking: any) => {
+        if (booking.packageDetails) {
+          booking.packageDetails.forEach((pkg: any) => {
+            if (pkg.itemDetails) {
+              pkg.itemDetails.forEach((item: any) => {
+                itemDetailsMap.set(item.tiPartNumber, {
+                  ...item,
+                  shippingDate: consolidatedInfo.shippingDate,
+                  estimatedDateOfArrival: consolidatedInfo.estimatedDateOfArrival,
+                  carrier: consolidatedInfo.carrierShipmentMasterTrackingNumber
+                })
+              })
+            }
+          })
+        }
+      })
+    })
 
-    // 确保 bookingOrderDetails 和 packageDetails 存在
-    if (!bookingOrderDetails[0] || !bookingOrderDetails[0].packageDetails) {
-      console.error('TI ASN API 响应中缺少 packageDetails')
-      return NextResponse.json({ error: 'TI ASN API 响应中缺少 packageDetails' }, { status: 500 })
-    }
-
-    const packageDetails = bookingOrderDetails[0].packageDetails
-
-    // 打印 packageDetails 以调试
-    console.log('packageDetails:', JSON.stringify(packageDetails, null, 2))
+    // 打印 itemDetailsMap 的内容
+    console.error('\x1b[31m%s\x1b[0m', 'itemDetailsMap contents:')
+    Array.from(itemDetailsMap).forEach(([key, value]) => {
+      console.error('\x1b[31m%s\x1b[0m', `Key: ${key}, Value:`, JSON.stringify(value, null, 2))
+    })
 
     // 更新每个组件的信息
     order.components.forEach((component: any) => {
-      let matchingItem = null;
-      packageDetails.forEach((pkg: any) => {
-        const item = pkg.itemDetails.find((i: any) => i.tiPartNumber === component.name)
-        if (item) {
-          matchingItem = item;
-        }
-      })
+      const matchingItem = itemDetailsMap.get(component.name)
+      
+      console.error('\x1b[31m%s\x1b[0m', 'Matching attempt:', JSON.stringify({
+        componentName: component.name,
+        matchingItem: matchingItem ? matchingItem.tiPartNumber : 'Not found'
+      }))
+
       if (matchingItem) {
-        component.shippingDate = consolidatedInfo.shippingDate
-        component.estimatedDateOfArrival = consolidatedInfo.estimatedDateOfArrival
-        component.carrier = consolidatedInfo.carrierShipmentMasterTrackingNumber
-        console.log('更新的组件信息:', JSON.stringify(component, null, 2)) // 添加这行来打印更新后的组件信息
+        component.shippingDate = matchingItem.shippingDate
+        component.estimatedDateOfArrival = matchingItem.estimatedDateOfArrival
+        component.carrier = matchingItem.carrier
+        console.log('更新的组件信息:', JSON.stringify(component, null, 2))
       } else {
         console.warn(`未找到匹配的组件: ${component.name}`)
       }
