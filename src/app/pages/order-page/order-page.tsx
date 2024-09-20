@@ -224,9 +224,9 @@ export default function OrderManagement() {
           k3Code: excelMatch ? excelMatch['K3编码'] : '',
           type: excelMatch ? excelMatch['类型'] : '',
           description: excelMatch ? excelMatch['规格描述'] : '',
+          quoteNumber: quotationData.quotation.quoteNumber // 添加报价单号
         };
       });
-
 
       const orderData = {
         ...newOrder,

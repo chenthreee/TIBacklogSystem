@@ -24,7 +24,7 @@ export async function POST(
     // 将所有元件加入购物车
     order.components.forEach((component: any) => {
       const deliveryDate = new Date(component.deliveryDate)
-      ordersAPI.addItemToCart(component.name, component.quantity, deliveryDate, component.unitPrice, component.quoteNumber)
+      ordersAPI.addItemToCart(component.name, component.quantity, deliveryDate, component.unitPrice, component.quoteNumber,component.k3Code)
     })
 
     // 发送创建订单请求

@@ -152,7 +152,7 @@ export class TIBacklogOrders {
   }
 
   // 添加商品到订单
-  addItemToCart(partNumber: string, quantity: number, deliveryDate: Date, unitPrice: number, quoteNumber: string, currencyCode = 'USD'): void {
+  addItemToCart(partNumber: string, quantity: number, deliveryDate: Date, unitPrice: number, quoteNumber: string,customerPartNumber:string, currencyCode = 'USD'): void {
     const itemNumber = this.lineItems.length + 1;
     this.lineItems.push({
       customerLineItemNumber: itemNumber,
@@ -160,6 +160,7 @@ export class TIBacklogOrders {
       customerAnticipatedUnitPrice: unitPrice, // 单价
       quoteNumber: quoteNumber, // 报价单号
       customerCurrencyCode: currencyCode, // 货币代码
+      customerPartNumber: customerPartNumber, // 客户零件号
       schedules: [
         {
           requestedQuantity: quantity, // 数量
@@ -181,6 +182,7 @@ export class TIBacklogOrders {
         lineItems: this.lineItems,
       },
     };
+    console.log('发送请求为:', JSON.stringify(data, null, 2));
     return this.api.post(url, data);
   }
 
