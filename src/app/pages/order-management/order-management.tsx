@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Menu, Search, FileText, Package, Truck, DollarSign, ChevronDown } from 'lucide-react'
+import { Menu, Search, FileText, Package, Truck, DollarSign, ChevronDown, CreditCard } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -14,6 +14,7 @@ import QuotationManagement from '../quotation-management/quotation-management'
 import OrderPage from '../order-page/order-page'
 import Logistics from '../logistics-page/logistics'
 import InvoicePage from '../invoice-page/invoice'
+import RemittanceNotification from '../remittanceNotification-page/remittanceNotification'
 
 export default function OrderManagementSystem() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -29,6 +30,8 @@ export default function OrderManagementSystem() {
         return <Logistics />
       case 'finance':
         return <InvoicePage />
+      case 'remittance':
+        return <RemittanceNotification />
       default:
         return <div>请选择一个选项</div>
     }
@@ -70,6 +73,14 @@ export default function OrderManagementSystem() {
           >
             <DollarSign className="inline-block mr-2" size={20} />
             财务票据
+          </a>
+          <a 
+            className={`block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-200 hover:text-gray-900 ${activeTab === 'remittance' ? 'bg-gray-200 text-gray-900' : ''}`}
+            href="#"
+            onClick={() => setActiveTab('remittance')}
+          >
+            <CreditCard className="inline-block mr-2" size={20} />
+            汇款通知
           </a>
         </nav>
       </aside>

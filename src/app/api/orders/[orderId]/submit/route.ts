@@ -35,7 +35,7 @@ export async function POST(
     )
 
     // 打印完整的响应，包括 lineItems
-    console.log('TI API 响应:', JSON.stringify(response, null, 2))
+    console.error('TI API 响应:', JSON.stringify(response, null, 2))
 
     // 更新订单状态和 TI 订单号
     order.status = response.orders[0].orderStatus
