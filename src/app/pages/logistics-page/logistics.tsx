@@ -31,7 +31,6 @@ interface LogisticsComponent {
   name: string
   shippingDate: string
   estimatedDateOfArrival: string
-  //carrierShipmentMasterTrackingNumber: string
   carrier: string
 }
 
@@ -193,7 +192,6 @@ export default function LogisticsInformation() {
                                   <TableCell>{component.shippingDate || '未发货'}</TableCell>
                                   <TableCell>{component.estimatedDateOfArrival || '未知'}</TableCell>
                                   <TableCell>{component.carrier || '无'}</TableCell>
-                                  {/* <TableCell>{component.carrierShipmentMasterTrackingNumber || '无'}</TableCell> */}
                                 </TableRow>
                               ))}
                             </TableBody>

@@ -35,11 +35,10 @@ export async function GET(req: NextRequest) {
       status: order.status,
       tiOrderNumber: order.tiOrderNumber,
       components: order.components.map((component: any) => ({
-        name: component.tiPartNumber || component.name || '未知', // 添加 fallback
+        name: component.tiPartNumber || component.name || '未知',
         shippingDate: component.shippingDate || '',
         estimatedDateOfArrival: component.estimatedDateOfArrival || '',
-        carrierShipmentMasterTrackingNumber: component.carrier || ''
-        //carrierShipmentMasterTrackingNumber: component.carrierShipmentMasterTrackingNumber || ''
+        carrier: component.carrier || ''
       }))
     }));
     
