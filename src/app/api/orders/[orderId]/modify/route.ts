@@ -79,6 +79,7 @@ export async function POST(
     )
 
     console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
+    console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
 
     // 更新本地订单信息
     order.status = response.orders[0].orderStatus
