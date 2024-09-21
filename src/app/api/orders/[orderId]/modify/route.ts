@@ -24,7 +24,6 @@ export async function POST(
       return NextResponse.json({ error: '该订单尚未提交到 TI' }, { status: 400 })
     }
 
-    // 初始化 TIBacklogOrders
     const ordersAPI = new TIBacklogOrders(process.env.CLIENT_ID!, process.env.CLIENT_SECRET!, process.env.SERVER_URL!)
 
     // 准备修改订单的数据
@@ -71,6 +70,7 @@ export async function POST(
       })
     }
 
+    console.log('准备发送到TI的lineItems:', JSON.stringify(lineItems, null, 2));
     // 发送修改订单请求
     const response = await ordersAPI.changeOrder(
       order.customer,
@@ -79,6 +79,7 @@ export async function POST(
       lineItems
     )
 
+    console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
     console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
 
     // 更新本地订单信息
@@ -97,6 +98,21 @@ export async function POST(
       }
       return comp
     })
+    order.components = components
+      .filter((comp: any) => !comp.isDeleted) // 过滤掉标记为删除的组件
+      .map((comp: any) => {
+        const tiLineItem = response.orders[0].lineItems.find((li: any) => li.tiPartNumber === comp.name)
+        if (tiLineItem) {
+          return {
+            ...comp,
+            status: tiLineItem.status,
+            tiLineItemNumber: tiLineItem.tiLineItemNumber,
+            quantity: tiLineItem.schedules[0].requestedQuantity,
+            deliveryDate: tiLineItem.schedules[0].requestedDeliveryDate,
+          }
+        }
+        return comp
+      })
 
     await order.save()
 
