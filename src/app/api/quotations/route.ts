@@ -27,6 +27,7 @@ export async function GET() {
       customer: q.customer || 'N/A',
       totalAmount: q.totalAmount ? Number(q.totalAmount) : 0,
       status: q.quoteStatus || 'N/A',
+      quoteNumber: q.quoteNumber || 'N/A',
       components: Array.isArray(q.components) ? q.components.map((c: any) => ({
         id: c._id?.toString(),
         name: c.name || 'N/A',

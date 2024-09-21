@@ -31,6 +31,7 @@ function QuotationTable({
         <TableHeader>
           <TableRow>
             <TableHead>报价ID</TableHead>
+            <TableHead>TI报价号</TableHead>
             <TableHead>日期</TableHead>
             <TableHead>客户</TableHead>
             <TableHead>总金额</TableHead>
@@ -43,6 +44,7 @@ function QuotationTable({
             <>
               <TableRow key={quotation.id}>
                 <TableCell>{quotation.id}</TableCell>
+                <TableCell>{quotation.quoteNumber || '未提交'}</TableCell>
                 <TableCell>{quotation.date}</TableCell>
                 <TableCell>{quotation.customer}</TableCell>
                 <TableCell>${quotation.totalAmount.toFixed(2)}</TableCell>
@@ -100,7 +102,7 @@ function QuotationTable({
               </TableRow>
               {expandedQuotations.includes(quotation.id) && (
                 <TableRow>
-                  <TableCell colSpan={6}>
+                  <TableCell colSpan={7}>
                     <Table>
                       <TableHeader>
                         <TableRow>

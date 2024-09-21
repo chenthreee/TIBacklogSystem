@@ -15,6 +15,7 @@ interface Quotation {
   customer: string;
   totalAmount: number;
   components: Component[];
+  quoteNumber: string;
   status: string;
 }
 

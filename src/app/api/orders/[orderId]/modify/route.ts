@@ -26,8 +26,6 @@ export async function POST(
     // 初始化 TIBacklogOrders
     const ordersAPI = new TIBacklogOrders(process.env.CLIENT_ID!, process.env.CLIENT_SECRET!, process.env.SERVER_URL!)
 
-    // 打印 components 的值
-    console.log('修改订单前的组件数据:', JSON.stringify(components, null, 2))
     // 准备修改订单的数据
     const lineItems = components.map((component: any, index: number) => ({
       customerLineItemNumber: index + 1,
