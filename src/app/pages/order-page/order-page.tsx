@@ -165,11 +165,11 @@ export default function OrderManagement() {
         throw new Error('未找到要修改的订单')
       }
 
-      // 使用本地编辑的组件信息或原始组件信息
+      // 包含所有组件，包括标记为删除的组件
       const updatedComponents = orderToModify.components.map(comp => {
-        const localEdit = localEditedComponents[`${orderId}-${comp.id}`]
-        return localEdit ? { ...comp, ...localEdit } : comp
-      })
+        const localEdit = localEditedComponents[`${orderId}-${comp.id}`];
+        return localEdit ? { ...comp, ...localEdit } : comp;
+      });
 
       const response = await fetch(`/api/orders/${orderId}/modify`, {
         method: 'POST',
@@ -250,11 +250,23 @@ export default function OrderManagement() {
         .map((component: any) => {
           const excelMatch = excelData.find((row: any) => row['规格描述'].includes(component.name));
           if (excelMatch) {
+            // 转换 Excel 日期
+            const excelDate = excelMatch['交期'];
+            let deliveryDate;
+            if (typeof excelDate === 'number') {
+              // Excel 日期是从 1900 年 1 月 1 日开始的天数
+              const date = new Date((excelDate - 25569) * 86400 * 1000);
+              deliveryDate = date.toISOString().split('T')[0]; // 格式化为 YYYY-MM-DD
+            } else {
+              deliveryDate = excelDate; // 如果不是数字，保持原样
+            }
+
             return {
               ...component,
               k3Code: excelMatch['K3编码'],
               type: excelMatch['类型'],
               description: excelMatch['规格描述'],
+              deliveryDate: deliveryDate,
               quoteNumber: quotationData.quotation.quoteNumber // 添加报价单号
             };
           }
@@ -392,6 +404,17 @@ export default function OrderManagement() {
     }
   };
 
+  const handleDeleteComponent = (orderId: string, componentId: string) => {
+    setLocalEditedComponents(prev => ({
+      ...prev,
+      [`${orderId}-${componentId}`]: { ...prev[`${orderId}-${componentId}`], isDeleted: true }
+    }));
+    toast({
+      title: "元件已标记为删除",
+      description: "元件将在下次提交修改时被删除。",
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -430,6 +453,7 @@ export default function OrderManagement() {
             expandedOrders={expandedOrders}
             handleEditComponent={handleEditComponent}
             localEditedComponents={localEditedComponents}
+            handleDeleteComponent={handleDeleteComponent}
           />
         </div>
       )}
