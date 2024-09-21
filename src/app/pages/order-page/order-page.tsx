@@ -508,6 +508,18 @@ export default function OrderManagement() {
                   className="col-span-3"
                 />
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-quoteNumber" className="text-right">
+                  TI报价号
+                </Label>
+                <Input
+                  id="edit-quoteNumber"
+                  type="text"
+                  value={editingComponent.quoteNumber || ''}
+                  onChange={(e) => setEditingComponent({...editingComponent, quoteNumber: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button onClick={() => handleSaveComponent(editingComponent)}>保存更改</Button>
