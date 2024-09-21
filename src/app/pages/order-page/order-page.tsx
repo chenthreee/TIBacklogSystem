@@ -71,6 +71,7 @@ export default function OrderManagement() {
   const [excelData, setExcelData] = useState<any[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+  const [localEditedComponents, setLocalEditedComponents] = useState<{[key: string]: Component}>({})
 
   useEffect(() => {
     fetchData()
@@ -145,48 +146,76 @@ export default function OrderManagement() {
   }
 
   const handleSaveComponent = async (editedComponent: any) => {
+    // 只在本地状态中保存修改，不发送到服务器
+    setLocalEditedComponents(prev => ({
+      ...prev,
+      [`${editedComponent.orderId}-${editedComponent.id}`]: editedComponent
+    }))
+    setEditingComponent(null)
+    toast({
+      title: "组件已临时更新",
+      description: "组件信息已在页面上更新。请点击'修改'按钮以提交到TI。",
+    })
+  }
+
+  const handleModifyOrder = async (orderId: string) => {
     try {
-      const response = await fetch(`/api/orders/${editedComponent.orderId}/components/${editedComponent.id}`, {
-        method: 'PUT',
+      const orderToModify = orders.find(o => o._id === orderId)
+      if (!orderToModify) {
+        throw new Error('未找到要修改的订单')
+      }
+
+      // 使用本地编辑的组件信息或原始组件信息
+      const updatedComponents = orderToModify.components.map(comp => {
+        const localEdit = localEditedComponents[`${orderId}-${comp.id}`]
+        return localEdit ? { ...comp, ...localEdit } : comp
+      })
+
+      const response = await fetch(`/api/orders/${orderId}/modify`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editedComponent),
-      });
+        body: JSON.stringify({ components: updatedComponents }),
+      })
 
       if (!response.ok) {
-        throw new Error('更新组件失败');
+        throw new Error('修改订单失败')
       }
 
-      const updatedComponent = await response.json();
-      
-      // 更新本地状态
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order._id === editedComponent.orderId
-            ? {
-                ...order,
-                components: order.components.map(comp => 
-                  comp.id === editedComponent.id ? updatedComponent : comp
-                )
-              }
-            : order
-        )
-      );
+      const data = await response.json()
+      // console.log('TI API 修改订单完整响应:', data.tiResponse)
+
+      // 更新本地订单状态
+      const updatedOrders = orders.map(o => 
+        o._id === orderId ? { 
+          ...o, 
+          status: data.order.status,
+          components: data.order.components
+        } : o
+      )
+      setOrders(updatedOrders)
+
+      // 清除本地编辑状态
+      setLocalEditedComponents(prev => {
+        const newState = { ...prev }
+        updatedComponents.forEach(comp => {
+          delete newState[`${orderId}-${comp.id}`]
+        })
+        return newState
+      })
 
       toast({
-        title: "组件已更新",
-        description: "组件信息已成功更新。",
-      });
-
-      setEditingComponent(null);
+        title: "订单已修改",
+        description: `订单 ${orderId} 已成功修改并更新。`,
+      })
     } catch (error) {
-      console.error('更新组件时出错:', error);
+      console.error('修改订单时出错:', error)
       toast({
         title: "错误",
-        description: "更新组件失败，请稍后重试。",
+        description: "修改订单失败，请稍后重试。",
         variant: "destructive",
-      });
+      })
     }
   }
 
@@ -324,43 +353,6 @@ export default function OrderManagement() {
     }
   };
 
-  const handleModifyOrder = async (orderId: string) => {
-    try {
-      const response = await fetch(`/api/orders/${orderId}/modify`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('修改订单失败');
-      }
-
-      const data = await response.json();
-      console.log('TI API 修改订单完整响应:', data.tiResponse);
-
-      // 更新本地订单状态
-      const updatedOrders = orders.map(o => 
-        o._id === orderId ? { 
-          ...o, 
-          status: data.order.status,
-          components: data.order.components
-        } : o
-      );
-      setOrders(updatedOrders);
-
-      toast({
-        title: "订单已修改",
-        description: `订单 ${orderId} 已成功修改并更新。`,
-      });
-    } catch (error) {
-      console.error('修改订单时出错:', error);
-      toast({
-        title: "错误",
-        description: "修改订单失败，请稍后重试。",
-        variant: "destructive",
-      });
-    }
-  }
-
   const handleQueryOrder = async (orderId: string) => {
     try {
       const response = await fetch(`/api/orders/${orderId}/query`, {
@@ -437,6 +429,7 @@ export default function OrderManagement() {
             toggleExpand={toggleExpand}
             expandedOrders={expandedOrders}
             handleEditComponent={handleEditComponent}
+            localEditedComponents={localEditedComponents}
           />
         </div>
       )}

@@ -10,6 +10,7 @@ export async function POST(
   await dbConnect()
 
   const { orderId } = params
+  const { components } = await req.json()
 
   try {
     const order = await Order.findById(orderId)
@@ -25,8 +26,10 @@ export async function POST(
     // 初始化 TIBacklogOrders
     const ordersAPI = new TIBacklogOrders(process.env.CLIENT_ID!, process.env.CLIENT_SECRET!, process.env.SERVER_URL!)
 
+    // 打印 components 的值
+    console.log('修改订单前的组件数据:', JSON.stringify(components, null, 2))
     // 准备修改订单的数据
-    const lineItems = order.components.map((component: any, index: number) => ({
+    const lineItems = components.map((component: any, index: number) => ({
       customerLineItemNumber: index + 1,
       lineItemChangeIndicator: 'U', // 'U' for update
       tiPartNumber: component.name,
@@ -34,8 +37,8 @@ export async function POST(
       customerCurrencyCode: 'USD', // 假设使用美元，您可能需要根据实际情况调整
       schedules: [
         {
-          requestedQuantity: component.quantity,
-          requestedDeliveryDate: component.deliveryDate,
+          requestedQuantity: component.quantity, // 使用页面传入的更新后的数量
+          requestedDeliveryDate: component.deliveryDate, // 使用页面传入的更新后的交期
         },
       ],
     }))
@@ -48,15 +51,20 @@ export async function POST(
       lineItems
     )
 
-    console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
+    // console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
 
     // 更新本地订单信息
     order.status = response.orders[0].orderStatus
-    order.components = order.components.map((comp: any) => {
+    order.components = components.map((comp: any) => {
       const tiLineItem = response.orders[0].lineItems.find((li: any) => li.tiPartNumber === comp.name)
       if (tiLineItem) {
-        comp.status = tiLineItem.status
-        comp.tiLineItemNumber = tiLineItem.tiLineItemNumber
+        return {
+          ...comp,
+          status: tiLineItem.status,
+          tiLineItemNumber: tiLineItem.tiLineItemNumber,
+          quantity: tiLineItem.schedules[0].requestedQuantity,
+          deliveryDate: tiLineItem.schedules[0].requestedDeliveryDate,
+        }
       }
       return comp
     })

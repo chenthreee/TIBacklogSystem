@@ -45,6 +45,7 @@ interface OrderTableProps {
   toggleExpand: (orderId: string) => void;
   expandedOrders: string[];
   handleEditComponent: (orderId: string, component: Component) => void;
+  localEditedComponents: {[key: string]: Component}
 }
 
 const OrderTable: React.FC<OrderTableProps> = ({
@@ -55,7 +56,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
   handleQueryOrder,
   toggleExpand,
   expandedOrders,
-  handleEditComponent
+  handleEditComponent,
+  localEditedComponents
 }) => {
   return (
     <Table>
@@ -143,28 +145,32 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {order.components.map((component) => (
-                        <TableRow key={component.id}>
-                          <TableCell>{component.name}</TableCell>
-                          <TableCell>{component.quantity}</TableCell>
-                          <TableCell>${component.unitPrice.toFixed(2)}</TableCell>
-                          <TableCell>
-                            ${(component.quantity * component.unitPrice).toFixed(2)}
-                          </TableCell>
-                          <TableCell>{component.status}</TableCell>
-                          <TableCell>{component.deliveryDate}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditComponent(order._id, component)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                              编辑
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {order.components.map((component) => {
+                        const localEdit = localEditedComponents[`${order._id}-${component.id}`]
+                        const displayComponent = localEdit || component
+                        return (
+                          <TableRow key={component.id}>
+                            <TableCell>{displayComponent.name}</TableCell>
+                            <TableCell>{displayComponent.quantity}</TableCell>
+                            <TableCell>${displayComponent.unitPrice.toFixed(2)}</TableCell>
+                            <TableCell>
+                              ${(displayComponent.quantity * displayComponent.unitPrice).toFixed(2)}
+                            </TableCell>
+                            <TableCell>{displayComponent.status}</TableCell>
+                            <TableCell>{displayComponent.deliveryDate}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditComponent(order._id, displayComponent)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                                编辑
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
                     </TableBody>
                   </Table>
                 </TableCell>
