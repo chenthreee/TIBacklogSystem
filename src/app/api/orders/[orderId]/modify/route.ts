@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Order from '@/models/Order'
+import Quotation from '@/models/Quotation'
 import { TIBacklogOrders } from '@/lib/external/TIBacklogAPI'
 
 export async function POST(
@@ -27,19 +28,48 @@ export async function POST(
     const ordersAPI = new TIBacklogOrders(process.env.CLIENT_ID!, process.env.CLIENT_SECRET!, process.env.SERVER_URL!)
 
     // 准备修改订单的数据
-    const lineItems = components.map((component: any, index: number) => ({
-      customerLineItemNumber: index + 1,
-      lineItemChangeIndicator: 'U', // 'U' for update
-      tiPartNumber: component.name,
-      customerAnticipatedUnitPrice: component.unitPrice,
-      customerCurrencyCode: 'USD', // 假设使用美元，您可能需要根据实际情况调整
-      schedules: [
-        {
-          requestedQuantity: component.quantity, // 使用页面传入的更新后的数量
-          requestedDeliveryDate: component.deliveryDate, // 使用页面传入的更新后的交期
-        },
-      ],
-    }))
+    const lineItems = []
+    for (const component of components) {
+      // 查找对应的报价
+      const quotation = await Quotation.findOne({
+        quoteNumber: component.quoteNumber,
+        'components.name': component.name,
+        'components.tiPartNumber': component.tiPartNumber
+      })
+
+      if (!quotation) {
+        return NextResponse.json({ 
+          error: '修改失败：新的TI报价号中无对应的元件', 
+          componentName: component.name 
+        }, { status: 400 })
+      }
+
+      const matchedComponent = quotation.components.find(
+        (c: any) => c.name === component.name && c.tiPartNumber === component.tiPartNumber
+      )
+
+      if (!matchedComponent) {
+        return NextResponse.json({ 
+          error: '修改失败：新的TI报价号中无对应的元件', 
+          componentName: component.name 
+        }, { status: 400 })
+      }
+
+      lineItems.push({
+        customerLineItemNumber: lineItems.length + 1,
+        lineItemChangeIndicator: 'U', // 'U' for update
+        tiPartNumber: component.name,
+        customerAnticipatedUnitPrice: matchedComponent.tiPrice,
+        customerCurrencyCode: 'USD', // 假设使用美元，您可能需要根据实际情况调整
+        quoteNumber: component.quoteNumber,
+        schedules: [
+          {
+            requestedQuantity: component.quantity,
+            requestedDeliveryDate: component.deliveryDate,
+          },
+        ],
+      })
+    }
 
     // 发送修改订单请求
     const response = await ordersAPI.changeOrder(
@@ -49,7 +79,7 @@ export async function POST(
       lineItems
     )
 
-    // console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
+    console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
 
     // 更新本地订单信息
     order.status = response.orders[0].orderStatus
@@ -62,6 +92,7 @@ export async function POST(
           tiLineItemNumber: tiLineItem.tiLineItemNumber,
           quantity: tiLineItem.schedules[0].requestedQuantity,
           deliveryDate: tiLineItem.schedules[0].requestedDeliveryDate,
+          quoteNumber: comp.quoteNumber,
         }
       }
       return comp
