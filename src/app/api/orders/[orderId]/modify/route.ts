@@ -23,7 +23,10 @@ export async function POST(
     if (!order.tiOrderNumber) {
       return NextResponse.json({ error: '该订单尚未提交到 TI' }, { status: 400 })
     }
+
     const ordersAPI = new TIBacklogOrders(process.env.CLIENT_ID!, process.env.CLIENT_SECRET!, process.env.SERVER_URL!)
+    
+    console.log('传入的components:', JSON.stringify(components, null, 2));
 
     // 准备修改订单的数据
     const lineItems = []
@@ -53,9 +56,12 @@ export async function POST(
         }, { status: 400 })
       }
 
+      // 找到组件在原始订单中的索引
+      const originalIndex = order.components.findIndex((c: any) => c.id === component.id)
+
       lineItems.push({
-        customerLineItemNumber: lineItems.length + 1,
-        lineItemChangeIndicator: component.isDeleted ? 'X' : 'U', // 'U' for update
+        customerLineItemNumber: originalIndex + 1, // 使用原始订单中的索引 + 1
+        lineItemChangeIndicator: component.isDeleted ? 'X' : 'U', // 'X' for delete, 'U' for update
         tiPartNumber: component.name,
         customerAnticipatedUnitPrice: matchedComponent.tiPrice,
         customerCurrencyCode: 'USD', // 假设使用美元，您可能需要根据实际情况调整
@@ -79,26 +85,33 @@ export async function POST(
     )
 
     console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
-    console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
 
     // 更新本地订单信息
     order.status = response.orders[0].orderStatus
-    order.components = components
-      .filter((comp: any) => !comp.isDeleted) // 过滤掉标记为删除的组件
-      .map((comp: any) => {
-        const tiLineItem = response.orders[0].lineItems.find((li: any) => li.tiPartNumber === comp.name)
+    order.components = order.components.map((comp: any) => {
+      const updatedComp = components.find((c: any) => c.id === comp.id)
+      if (updatedComp) {
+        const tiLineItem = response.orders[0].lineItems.find((li: any) => li.tiPartNumber === updatedComp.name)
         if (tiLineItem) {
           return {
             ...comp,
-            status: tiLineItem.status,
+            ...updatedComp,
+            status: updatedComp.isDeleted ? 'deleted' : tiLineItem.status,
             tiLineItemNumber: tiLineItem.tiLineItemNumber,
             quantity: tiLineItem.schedules[0].requestedQuantity,
             deliveryDate: tiLineItem.schedules[0].requestedDeliveryDate,
-            quoteNumber:tiLineItem.quoteNumber,
+            quoteNumber: tiLineItem.quoteNumber,
           }
         }
-        return comp
-      })
+        return { ...comp, ...updatedComp, status: updatedComp.isDeleted ? 'deleted' : comp.status }
+      }
+      return comp
+    })
+
+    // 重新计算总金额，排除被标记为删除的组件
+    order.totalAmount = order.components.reduce((sum: number, comp: any) => {
+      return comp.status !== 'deleted' ? sum + (comp.quantity * comp.unitPrice) : sum
+    }, 0)
 
     await order.save()
 

@@ -86,6 +86,16 @@ const OrderTable: React.FC<OrderTableProps> = ({
     setIsDeleteDialogOpen(false);
   };
 
+  // 计算订单的实际总金额（排除已删除的元件）
+  const calculateActualTotal = (order: Order) => {
+    return order.components.reduce((sum, component) => {
+      const localEdit = localEditedComponents[`${order._id}-${component.id}`];
+      const displayComponent = localEdit || component;
+      const isDeleted = displayComponent.isDeleted || displayComponent.status === 'deleted';
+      return isDeleted ? sum : sum + (displayComponent.quantity * displayComponent.unitPrice);
+    }, 0);
+  };
+
   return (
     <>
       <Table>
@@ -106,7 +116,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                 <TableCell>{order._id}</TableCell>
                 <TableCell>{order.date}</TableCell>
                 <TableCell>{order.customer}</TableCell>
-                <TableCell>${(order.totalAmount ?? 0).toFixed(2)}</TableCell>
+                <TableCell>${calculateActualTotal(order).toFixed(2)}</TableCell>
                 <TableCell>{order.status}</TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
@@ -176,15 +186,16 @@ const OrderTable: React.FC<OrderTableProps> = ({
                         {order.components.map((component) => {
                           const localEdit = localEditedComponents[`${order._id}-${component.id}`];
                           const displayComponent = localEdit || component;
+                          const isDeleted = displayComponent.isDeleted || displayComponent.status === 'deleted';
                           return (
-                            <TableRow key={component.id}>
+                            <TableRow key={component.id} className={isDeleted ? 'opacity-50' : ''}>
                               <TableCell>{displayComponent.name}</TableCell>
                               <TableCell>{displayComponent.quantity}</TableCell>
                               <TableCell>${displayComponent.unitPrice?.toFixed(2) ?? '0.00'}</TableCell>
                               <TableCell>
-                                ${(displayComponent.quantity * displayComponent.unitPrice).toFixed(2)}
+                                ${isDeleted ? '0.00' : (displayComponent.quantity * displayComponent.unitPrice).toFixed(2)}
                               </TableCell>
-                              <TableCell>{displayComponent.status}</TableCell>
+                              <TableCell>{isDeleted ? '已删除' : displayComponent.status}</TableCell>
                               <TableCell>{displayComponent.deliveryDate}</TableCell>
                               <TableCell>
                                 <div className="flex space-x-2">
@@ -192,6 +203,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleEditComponent(order._id, displayComponent)}
+                                    disabled={isDeleted}
                                   >
                                     <Pencil className="h-4 w-4" />
                                     编辑
@@ -200,6 +212,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => openDeleteDialog(order._id, component.id)}
+                                    disabled={isDeleted}
                                   >
                                     <Trash2 className="h-4 w-4" />
                                     删除
@@ -220,7 +233,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
       </Table>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-white">  {/* 添加 bg-white 类 */}
+        <AlertDialogContent className="bg-white shadow-lg rounded-xl p-6">
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除元件</AlertDialogTitle>
             <AlertDialogDescription>

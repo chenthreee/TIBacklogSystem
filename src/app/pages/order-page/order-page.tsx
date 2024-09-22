@@ -165,11 +165,22 @@ export default function OrderManagement() {
         throw new Error('未找到要修改的订单')
       }
 
-      // 包含所有组件，包括标记为删除的组件
-      const updatedComponents = orderToModify.components.map(comp => {
-        const localEdit = localEditedComponents[`${orderId}-${comp.id}`];
-        return localEdit ? { ...comp, ...localEdit } : comp;
-      });
+      // 只包含被编辑或标记为删除的组件
+      const updatedComponents = orderToModify.components
+        .filter(comp => localEditedComponents[`${orderId}-${comp.id}`])
+        .map(comp => {
+          const localEdit = localEditedComponents[`${orderId}-${comp.id}`];
+          return { ...comp, ...localEdit };
+        });
+
+      // 如果没有需要更新的组件，提示用户并返回
+      if (updatedComponents.length === 0) {
+        toast({
+          title: "无修改",
+          description: "没有检测到任何修改的组件。",
+        });
+        return;
+      }
 
       const response = await fetch(`/api/orders/${orderId}/modify`, {
         method: 'POST',
@@ -184,14 +195,17 @@ export default function OrderManagement() {
       }
 
       const data = await response.json()
-      // console.log('TI API 修改订单完整响应:', data.tiResponse)
 
       // 更新本地订单状态
       const updatedOrders = orders.map(o => 
         o._id === orderId ? { 
           ...o, 
           status: data.order.status,
-          components: data.order.components
+          totalAmount: data.order.totalAmount,
+          components: o.components.map(comp => {
+            const updatedComp = data.order.components.find((c: any) => c.id === comp.id);
+            return updatedComp ? { ...comp, ...updatedComp } : comp;
+          })
         } : o
       )
       setOrders(updatedOrders)
@@ -411,7 +425,7 @@ export default function OrderManagement() {
     }));
     toast({
       title: "元件已标记为删除",
-      description: "元件将在下次提交修改时被删除。",
+      description: "元件已标记为删除，将在下次提交修改时生效。",
     });
   };
 
