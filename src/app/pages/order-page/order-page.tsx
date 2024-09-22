@@ -165,23 +165,61 @@ export default function OrderManagement() {
         throw new Error('未找到要修改的订单')
       }
 
+      // 首先查询订单状态
+      const queryResponse = await fetch(`/api/orders/${orderId}/query`, {
+        method: 'GET',
+      });
+
+      if (!queryResponse.ok) {
+        throw new Error('查询订单状态失败');
+      }
+
+      const queryData = await queryResponse.json();
+      console.log('订单查询响应:', queryData);
+
       // 只包含被编辑或标记为删除的组件
-      const updatedComponents = orderToModify.components
+      const editedComponents = orderToModify.components
         .filter(comp => localEditedComponents[`${orderId}-${comp.id}`])
         .map(comp => {
           const localEdit = localEditedComponents[`${orderId}-${comp.id}`];
           return { ...comp, ...localEdit };
         });
 
-      // 如果没有需要更新的组件，提示用户并返回
+      // 检查每个编辑过的组件是否可以修改
+      const updatedComponents: Component[] = [];
+      const unmodifiableComponents: string[] = [];
+
+      for (const component of editedComponents) {
+        const tiLineItem = queryData.tiResponse.orders[0].lineItems.find(
+          (li: any) => li.tiPartNumber === component.name
+        );
+
+        if (tiLineItem && !tiLineItem.nonCancellableNonReturnable) {
+          updatedComponents.push(component);
+        } else {
+          unmodifiableComponents.push(component.name);
+        }
+      }
+
+      // 如果有不可修改的组件，提示用户
+      if (unmodifiableComponents.length > 0) {
+        toast({
+          title: "部分组件无法修改",
+          description: `以下组件已过修改窗口期：${unmodifiableComponents.join(', ')}`,
+          variant: "destructive",
+        });
+      }
+
+      // 如果没有可以更新的组件，提示用户并返回
       if (updatedComponents.length === 0) {
         toast({
-          title: "无修改",
-          description: "没有检测到任何修改的组件。",
+          title: "无可修改的组件",
+          description: "所有修改的组件都已过修改窗口期。",
         });
         return;
       }
 
+      // 发送修改请求
       const response = await fetch(`/api/orders/${orderId}/modify`, {
         method: 'POST',
         headers: {
