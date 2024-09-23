@@ -32,7 +32,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
-import { TIBacklogRemittance } from "@/lib/external/TIBacklogAPI"
 
 interface RemittanceInfo {
   id: string
@@ -217,7 +216,7 @@ export default function RemittanceNotification() {
               <Plus className="mr-2 h-4 w-4" /> 添加汇款通知
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className={cn("sm:max-w-[425px]", "bg-white")}>
             <DialogHeader>
               <DialogTitle>添加新汇款通知</DialogTitle>
               <DialogDescription>
