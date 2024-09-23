@@ -124,7 +124,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
           {orders.map((order) => (
             <React.Fragment key={order._id}>
               <TableRow>
-                <TableCell>{order._id}</TableCell>
+                <TableCell>{order.purchaseOrderNumber}</TableCell>
                 <TableCell>{order.date}</TableCell>
                 <TableCell>{order.customer}</TableCell>
                 <TableCell>${calculateActualTotal(order).toFixed(2)}</TableCell>
