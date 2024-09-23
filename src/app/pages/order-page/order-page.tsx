@@ -170,12 +170,13 @@ export default function OrderManagement() {
 
   const handleModifyOrder = async (orderId: string) => {
     try {
+      console.log("开始执行修改订单");
       const orderToModify = orders.find(o => o._id === orderId)
       if (!orderToModify) {
         throw new Error('未找到要修改的订单')
       }
 
-      // 首先查询订单状态
+      // 查询订单状态
       const queryResponse = await fetch(`/api/orders/${orderId}/query`, {
         method: 'GET',
       });
@@ -187,25 +188,30 @@ export default function OrderManagement() {
       const queryData = await queryResponse.json();
       console.log('订单查询响应:', queryData);
 
-      // 只包含被编辑或标记为删除的组件
-      const editedComponents = orderToModify.components
-        .filter(comp => localEditedComponents[`${orderId}-${comp.id}`])
-        .map(comp => {
-          const localEdit = localEditedComponents[`${orderId}-${comp.id}`];
-          return { ...comp, ...localEdit };
-        });
+      // 合并本地编辑和原始组件
+      const updatedComponents = orderToModify.components.map(comp => {
+        const localEdit = localEditedComponents[`${orderId}-${comp.id}`];
+        return localEdit ? { ...comp, ...localEdit } : comp;
+      });
 
-      // 检查每个编辑过的组件是否可以修改
-      const updatedComponents: Component[] = [];
+      // 过滤出需要修改的组件（包括被编辑或标记为删除的）
+      const componentsToModify = updatedComponents.filter(comp => 
+        localEditedComponents[`${orderId}-${comp.id}`] || comp.isDeleted
+      );
+
+      console.log("需要修改的组件:", JSON.stringify(componentsToModify, null, 2));
+
+      // 检查每个需要修改的组件是否可以修改
+      const modifiableComponents: Component[] = [];
       const unmodifiableComponents: string[] = [];
 
-      for (const component of editedComponents) {
+      for (const component of componentsToModify) {
         const tiLineItem = queryData.tiResponse.orders[0].lineItems.find(
           (li: any) => li.tiPartNumber === component.name
         );
 
         if (tiLineItem && !tiLineItem.nonCancellableNonReturnable) {
-          updatedComponents.push(component);
+          modifiableComponents.push(component);
         } else {
           unmodifiableComponents.push(component.name);
         }
@@ -221,7 +227,7 @@ export default function OrderManagement() {
       }
 
       // 如果没有可以更新的组件，提示用户并返回
-      if (updatedComponents.length === 0) {
+      if (modifiableComponents.length === 0) {
         toast({
           title: "无可修改的组件",
           description: "所有修改的组件都已过修改窗口期。",
@@ -229,13 +235,16 @@ export default function OrderManagement() {
         return;
       }
 
+      const requestBody = { components: modifiableComponents };
+      console.log("发送到服务器的请求体:", JSON.stringify(requestBody, null, 2));
+
       // 发送修改请求
       const response = await fetch(`/api/orders/${orderId}/modify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ components: updatedComponents }),
+        body: JSON.stringify(requestBody),
       })
 
       if (!response.ok) {
@@ -250,7 +259,7 @@ export default function OrderManagement() {
           ...o, 
           status: data.order.status,
           totalAmount: data.order.totalAmount,
-          components: o.components.map(comp => {
+          components: updatedComponents.map(comp => {
             const updatedComp = data.order.components.find((c: any) => c.id === comp.id);
             return updatedComp ? { ...comp, ...updatedComp } : comp;
           })
@@ -261,7 +270,7 @@ export default function OrderManagement() {
       // 清除本地编辑状态
       setLocalEditedComponents(prev => {
         const newState = { ...prev }
-        updatedComponents.forEach(comp => {
+        modifiableComponents.forEach(comp => {
           delete newState[`${orderId}-${comp.id}`]
         })
         return newState

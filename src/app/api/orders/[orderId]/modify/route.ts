@@ -65,7 +65,7 @@ export async function POST(
         quoteNumber: component.quoteNumber,
         schedules: [
           {
-            requestedQuantity: component.quantity,
+            requestedQuantity: component.quantity, // 使用从前端传来的最新数量
             requestedDeliveryDate: component.deliveryDate,
           },
         ],
