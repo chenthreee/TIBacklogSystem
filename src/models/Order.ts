@@ -1,5 +1,15 @@
 import mongoose from 'mongoose';
 
+const ConfirmationSchema = new mongoose.Schema({
+  tiScheduleLineNumber: String,
+  scheduledQuantity: Number,
+  estimatedShipDate: String,
+  estimatedDeliveryDate: String,
+  estimatedDeliveryDateStatus: String,
+  shippedQuantity: Number,
+  customerRequestedShipDate: String
+});
+
 const ComponentSchema = new mongoose.Schema({
   id: String,
   name: String,
@@ -12,9 +22,10 @@ const ComponentSchema = new mongoose.Schema({
   shippingDate: String,
   estimatedDateOfArrival: String,
   carrier: String,
-  k3Code: String, // 新增字段
-  type: String, // 新增字段
-  description: String // 新增字段
+  k3Code: String,
+  type: String,
+  description: String,
+  confirmations: [ConfirmationSchema] // 新增字段
 });
 
 const OrderSchema = new mongoose.Schema({
@@ -26,7 +37,7 @@ const OrderSchema = new mongoose.Schema({
   tiOrderNumber: String,
   components: [ComponentSchema],
   quotationId: String,
-  purchaseOrderNumber: String // 新增字段
+  purchaseOrderNumber: String
 });
 
 const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);

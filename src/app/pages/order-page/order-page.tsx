@@ -46,8 +46,18 @@ interface Component {
   k3Code: string
   type: string
   description: string
+  confirmations?: Confirmation[];
 }
 
+interface Confirmation {
+  tiScheduleLineNumber: string;
+  scheduledQuantity: number;
+  estimatedShipDate: string;
+  estimatedDeliveryDate: string;
+  estimatedDeliveryDateStatus: string;
+  shippedQuantity: number;
+  customerRequestedShipDate: string;
+}
 export default function OrderManagement() {
   const [orders, setOrders] = useState<Order[]>([])
   const [expandedOrders, setExpandedOrders] = useState<string[]>([])

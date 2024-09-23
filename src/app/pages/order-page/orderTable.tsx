@@ -32,6 +32,16 @@ interface Order {
   purchaseOrderNumber: string;
 }
 
+interface Confirmation {
+  tiScheduleLineNumber: string;
+  scheduledQuantity: number;
+  estimatedShipDate: string;
+  estimatedDeliveryDate: string;
+  estimatedDeliveryDateStatus: string;
+  shippedQuantity: number;
+  customerRequestedShipDate: string;
+}
+
 interface Component {
   id: string;
   name: string;
@@ -44,6 +54,7 @@ interface Component {
   k3Code: string;
   type: string;
   description: string;
+  confirmations?: Confirmation[];
 }
 
 interface OrderTableProps {
@@ -179,6 +190,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                           <TableHead>小计</TableHead>
                           <TableHead>状态</TableHead>
                           <TableHead>交期</TableHead>
+                          <TableHead>确认信息</TableHead>
                           <TableHead>操作</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -197,6 +209,24 @@ const OrderTable: React.FC<OrderTableProps> = ({
                               </TableCell>
                               <TableCell>{isDeleted ? '已删除' : displayComponent.status}</TableCell>
                               <TableCell>{displayComponent.deliveryDate}</TableCell>
+                              <TableCell>
+                                {displayComponent.confirmations && displayComponent.confirmations.length > 0 ? (
+                                  <details>
+                                    <summary>查看确认信息</summary>
+                                    <ul>
+                                      {displayComponent.confirmations.map((conf, index) => (
+                                        <li key={index}>
+                                          <p>预计发货日期: {conf.estimatedShipDate}</p>
+                                          <p>预计交付日期: {conf.estimatedDeliveryDate}</p>
+                                          <p>确认数量: {conf.scheduledQuantity}</p>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </details>
+                                ) : (
+                                  '无确认信息'
+                                )}
+                              </TableCell>
                               <TableCell>
                                 <div className="flex space-x-2">
                                   <Button

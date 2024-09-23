@@ -28,10 +28,8 @@ export async function POST(
     
     console.log('传入的components:', JSON.stringify(components, null, 2));
 
-    // 准备修改订单的数据
     const lineItems = []
     for (const component of components) {
-      // 查找对应的报价
       const quotation = await Quotation.findOne({
         quoteNumber: component.quoteNumber,
         'components.name': component.name,
@@ -56,15 +54,14 @@ export async function POST(
         }, { status: 400 })
       }
 
-      // 找到组件在原始订单中的索引
       const originalIndex = order.components.findIndex((c: any) => c.id === component.id)
 
       lineItems.push({
-        customerLineItemNumber: originalIndex + 1, // 使用原始订单中的索引 + 1
-        lineItemChangeIndicator: component.isDeleted ? 'X' : 'U', // 'X' for delete, 'U' for update
+        customerLineItemNumber: originalIndex + 1,
+        lineItemChangeIndicator: component.isDeleted ? 'X' : 'U',
         tiPartNumber: component.name,
         customerAnticipatedUnitPrice: matchedComponent.tiPrice,
-        customerCurrencyCode: 'USD', // 假设使用美元，您可能需要根据实际情况调整
+        customerCurrencyCode: 'USD',
         quoteNumber: component.quoteNumber,
         schedules: [
           {
@@ -76,24 +73,22 @@ export async function POST(
     }
 
     console.log('准备发送到TI的lineItems:', JSON.stringify(lineItems, null, 2));
-    // 发送修改订单请求
     const response = await ordersAPI.changeOrder(
       order.customer,
       order.orderNumber,
-      process.env.SHIP_TO!, // 确保在环境变量中设置了 SHIP_TO
+      process.env.SHIP_TO!,
       lineItems
     )
 
     console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
 
-    // 更新本地订单信息
     order.status = response.orders[0].orderStatus
     order.components = order.components.map((comp: any) => {
       const updatedComp = components.find((c: any) => c.id === comp.id)
       if (updatedComp) {
         const tiLineItem = response.orders[0].lineItems.find((li: any) => li.tiPartNumber === updatedComp.name)
         if (tiLineItem) {
-          return {
+          const newComp = {
             ...comp,
             ...updatedComp,
             status: updatedComp.isDeleted ? 'deleted' : tiLineItem.status,
@@ -102,13 +97,25 @@ export async function POST(
             deliveryDate: tiLineItem.schedules[0].requestedDeliveryDate,
             quoteNumber: tiLineItem.quoteNumber,
           }
+          // 只有在存在确认信息时才更新
+          if (tiLineItem.schedules[0]?.confirmations) {
+            newComp.confirmations = tiLineItem.schedules[0].confirmations.map((conf: any) => ({
+              tiScheduleLineNumber: conf.tiScheduleLineNumber,
+              scheduledQuantity: conf.scheduledQuantity,
+              estimatedShipDate: conf.estimatedShipDate,
+              estimatedDeliveryDate: conf.estimatedDeliveryDate,
+              estimatedDeliveryDateStatus: conf.estimatedDeliveryDateStatus,
+              shippedQuantity: conf.shippedQuantity,
+              customerRequestedShipDate: conf.customerRequestedShipDate
+            }))
+          }
+          return newComp
         }
         return { ...comp, ...updatedComp, status: updatedComp.isDeleted ? 'deleted' : comp.status }
       }
       return comp
     })
 
-    // 重新计算总金额，排除被标记为删除的组件
     order.totalAmount = order.components.reduce((sum: number, comp: any) => {
       return comp.status !== 'deleted' ? sum + (comp.quantity * comp.unitPrice) : sum
     }, 0)
