@@ -47,6 +47,7 @@ interface Component {
   type: string
   description: string
   confirmations?: Confirmation[];
+  isDeleted?: boolean; // Added this line
 }
 
 interface Confirmation {
@@ -188,34 +189,27 @@ export default function OrderManagement() {
       const queryData = await queryResponse.json();
       console.log('订单查询响应:', queryData);
 
-      // 合并本地编辑和原始组件
-      const updatedComponents = orderToModify.components.map(comp => {
+      // 合并本地编辑和原始组件，并添加修改标记
+      const componentsToSend = orderToModify.components.map(comp => {
         const localEdit = localEditedComponents[`${orderId}-${comp.id}`];
-        return localEdit ? { ...comp, ...localEdit } : comp;
-      });
-
-      // 过滤出需要修改的组件（包括被编辑或标记为删除的）
-      const componentsToModify = updatedComponents.filter(comp => 
-        localEditedComponents[`${orderId}-${comp.id}`] || comp.isDeleted
-      );
-
-      console.log("需要修改的组件:", JSON.stringify(componentsToModify, null, 2));
-
-      // 检查每个需要修改的组件是否可以修改
-      const modifiableComponents: Component[] = [];
-      const unmodifiableComponents: string[] = [];
-
-      for (const component of componentsToModify) {
+        const updatedComp = localEdit ? { ...comp, ...localEdit } : comp;
+        
         const tiLineItem = queryData.tiResponse.orders[0].lineItems.find(
-          (li: any) => li.tiPartNumber === component.name
+          (li: any) => li.tiPartNumber === updatedComp.name
         );
 
-        if (tiLineItem && !tiLineItem.nonCancellableNonReturnable) {
-          modifiableComponents.push(component);
-        } else {
-          unmodifiableComponents.push(component.name);
-        }
-      }
+        const canModify = tiLineItem && !tiLineItem.nonCancellableNonReturnable;
+
+        return {
+          ...updatedComp,
+          lineItemChangeIndicator: updatedComp.isDeleted ? 'X' : 'U'
+        };
+      });
+
+      const unmodifiableComponents = componentsToSend
+        .filter(comp => !queryData.tiResponse.orders[0].lineItems.find((li: any) => li.tiPartNumber === comp.name) || 
+                        queryData.tiResponse.orders[0].lineItems.find((li: any) => li.tiPartNumber === comp.name).nonCancellableNonReturnable)
+        .map(comp => comp.name);
 
       // 如果有不可修改的组件，提示用户
       if (unmodifiableComponents.length > 0) {
@@ -226,16 +220,7 @@ export default function OrderManagement() {
         });
       }
 
-      // 如果没有可以更新的组件，提示用户并返回
-      if (modifiableComponents.length === 0) {
-        toast({
-          title: "无可修改的组件",
-          description: "所有修改的组件都已过修改窗口期。",
-        });
-        return;
-      }
-
-      const requestBody = { components: modifiableComponents };
+      const requestBody = { components: componentsToSend };
       console.log("发送到服务器的请求体:", JSON.stringify(requestBody, null, 2));
 
       // 发送修改请求
@@ -259,10 +244,7 @@ export default function OrderManagement() {
           ...o, 
           status: data.order.status,
           totalAmount: data.order.totalAmount,
-          components: updatedComponents.map(comp => {
-            const updatedComp = data.order.components.find((c: any) => c.id === comp.id);
-            return updatedComp ? { ...comp, ...updatedComp } : comp;
-          })
+          components: data.order.components
         } : o
       )
       setOrders(updatedOrders)
@@ -270,7 +252,7 @@ export default function OrderManagement() {
       // 清除本地编辑状态
       setLocalEditedComponents(prev => {
         const newState = { ...prev }
-        modifiableComponents.forEach(comp => {
+        componentsToSend.forEach(comp => {
           delete newState[`${orderId}-${comp.id}`]
         })
         return newState
