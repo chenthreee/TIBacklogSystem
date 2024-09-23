@@ -24,12 +24,12 @@ body {
   --foreground: #333333; /* 修改为深灰色 */
 }
 
-@media (prefers-color-scheme: light) {
+/* @media (prefers-color-scheme: light) {
   :root {
     --background: #0a0a0a;
     --foreground: #cccccc; /* 修改为浅灰色 */
-  }
-}
+  /* }
+}  */
 
 body {
   color: var(--foreground);

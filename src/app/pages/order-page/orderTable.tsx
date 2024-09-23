@@ -240,7 +240,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                                     <Pencil className="h-4 w-4" />
                                     编辑
                                   </Button>
-                                  {/* 删除按钮已被注释掉
+                                  
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -250,7 +250,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                                     <Trash2 className="h-4 w-4" />
                                     删除
                                   </Button>
-                                  */}
+                                 
                                 </div>
                               </TableCell>
                             </TableRow>
