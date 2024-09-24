@@ -1,0 +1,282 @@
+[33mcommit 2c04ea042d5c24362a96ac36b55f1fd67dced711[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Merge: d2b8588 e4e3d93
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Tue Sep 24 20:05:29 2024 +0800
+
+    conflict fix
+
+[33mcommit d2b85888a3af0405d7609e02d04b1e33933fd26c[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Tue Sep 24 20:02:27 2024 +0800
+
+    order creation bug fix
+
+[33mcommit e4e3d93e7c3fa0b54d54638cc5397681fd1e74b1[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Tue Sep 24 19:12:21 2024 +0800
+
+    订单管理界面添加MOQ和NQ 并写入数据库
+
+[33mcommit 56b3eba3179659537f9008742d56b1ea11d80e33[m
+Merge: edb75a9 6eb53c4
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Tue Sep 24 16:59:44 2024 +0800
+
+    Merge branch 'main' of https://github.com/LFRPINK/order-management
+
+[33mcommit edb75a957278a969361ca36b0e2566c977592ccd[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Tue Sep 24 16:59:10 2024 +0800
+
+    询价管理界面添加MOQ和NQ字段并写入数据库
+
+[33mcommit 6eb53c4dff6c701e882768a5a52497418acd0191[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Tue Sep 24 16:58:08 2024 +0800
+
+    remittance-notification modify
+
+[33mcommit 2fb81f15a466f686500119ca58f2f7a94c8b126b[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Tue Sep 24 14:43:58 2024 +0800
+
+    some modify
+
+[33mcommit 8cc40e3feddaec42ae206c78f0e3856b0be4a247[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Tue Sep 24 13:51:14 2024 +0800
+
+    更改用量为年用量
+
+[33mcommit 77595c54541de0ed1da99b869363e85314a4bc9d[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Tue Sep 24 13:36:18 2024 +0800
+
+    前端页面小修改
+
+[33mcommit 096d2e6e8694593332923a343438d140d4d66323[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Mon Sep 23 14:00:41 2024 +0800
+
+    订单号显示修改
+
+[33mcommit 9ec5baedd9bda673a979f5c96038584d491c7569[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Mon Sep 23 13:41:03 2024 +0800
+
+    css modify
+
+[33mcommit 570fb01a898b78c22c0945936a4291853d200479[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Mon Sep 23 11:49:22 2024 +0800
+
+    remittance modify
+
+[33mcommit 331029052d2fac5910c7d63eceb620dddfaf705d[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Mon Sep 23 11:34:06 2024 +0800
+
+    移除订单删除功能
+
+[33mcommit 93774f52bcaf92286afc3cfcfcd897738172fa21[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Mon Sep 23 11:14:58 2024 +0800
+
+    修改订单 未修改元件信息也需要一并上传TI
+
+[33mcommit e8ea802da62325226f133c6597315f6a61ba2e18[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Mon Sep 23 10:41:32 2024 +0800
+
+    订单中元件数量无法变更 问题修复
+
+[33mcommit 2a80fa17edf4f24081d2b7e27cb5d0738a9950be[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Mon Sep 23 10:37:59 2024 +0800
+
+    confirmations add
+
+[33mcommit 8f77beaa5788f6dd4d47a65bdf7330e402de7f2a[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Sun Sep 22 21:01:32 2024 +0800
+
+    COW modify implement
+
+[33mcommit f83fad11c8a2fff68dfd3619b9376d431c2a0460[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Sun Sep 22 20:30:15 2024 +0800
+
+    modify bug fix
+
+[33mcommit a3343cc78637a8548ac2ba9d93dc90044ac77e71[m
+Merge: 86d2e06 a269f28
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Sun Sep 22 00:00:32 2024 +0800
+
+    conflict solved
+
+[33mcommit 86d2e0691c4c2529aa13b9442829bd76dc1ddfbb[m
+Merge: db8ef07 60e14de
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Sat Sep 21 23:42:16 2024 +0800
+
+    conflict solved
+
+[33mcommit a269f28fb17e4e92fa2205f261500fe5923acb68[m
+Merge: 60e14de db8ef07
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Sat Sep 21 17:11:28 2024 +0800
+
+    解决合并冲突
+
+[33mcommit 60e14de569a86e6a9db259bd3091a65a287ba46b[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Sat Sep 21 16:58:36 2024 +0800
+
+    修改订单逻辑合理化 保存本地修改
+
+[33mcommit db8ef0757e1a7bba3838ef22cdf8c157779cae26[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Sat Sep 21 16:48:40 2024 +0800
+
+    delete function implement
+
+[33mcommit 1428c0ed6eb47f4ee124fe08148a231324ec26df[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Sat Sep 21 13:46:41 2024 +0800
+
+    quotation update
+
+[33mcommit 6730a2df1be8c2af68bede0e13f86efd9cfdc6c0[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Sat Sep 21 11:25:53 2024 +0800
+
+    order modify update
+
+[33mcommit 007e69fa3fa9b4500f17d1cbbf2fe8422f3f8d40[m
+Merge: ae6f805 6ec8816
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Fri Sep 20 21:07:44 2024 +0800
+
+    Merge branch 'main' of https://github.com/LFRPINK/order-management
+
+[33mcommit ae6f8053aa235785c2b49bb3eefe9cd60dbc2347[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Fri Sep 20 21:06:49 2024 +0800
+
+    新增汇款通知界面
+
+[33mcommit 6ec8816cf0cd9e19fc429d30caac5a482da68db3[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Fri Sep 20 16:47:17 2024 +0800
+
+    order change modify
+
+[33mcommit a31c239629b336612fa7d0ac9e9507c0061212cc[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Fri Sep 20 15:29:45 2024 +0800
+
+    order creation change
+
+[33mcommit ba1b7ccbf958d9776bee6b9ac82cc51fa66dc60b[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Fri Sep 20 14:30:14 2024 +0800
+
+    modify
+
+[33mcommit ad2d19ff6862ae3ed41842a868e0b1ec8c1fb185[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Fri Sep 20 14:04:08 2024 +0800
+
+    order creation modify
+
+[33mcommit 0c0feab4ee65d79602e8baac5700c5f24045066e[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Fri Sep 20 11:27:42 2024 +0800
+
+    解决物流信息中多个元件存在时 物流单号等信息无法正常显示问题
+
+[33mcommit 8f37abc5a6b505fa02c0f68439742776e8d18cef[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Fri Sep 20 09:22:07 2024 +0800
+
+    物流信息界面预计到达时间、发货时间、物流单号显示完成
+
+[33mcommit ca744cef36fb5589d7ede892773cd31d87d414e2[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Thu Sep 19 21:45:13 2024 +0800
+
+    更新
+
+[33mcommit ef05dfe87e1463fe16be520bc23f9e8331a48b87[m
+Merge: eecb270 a825b12
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Thu Sep 19 20:03:39 2024 +0800
+
+    Merge branch 'main' of https://github.com/LFRPINK/order-management
+
+[33mcommit eecb270d2671af7455830e57d06afd959de21aba[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Thu Sep 19 20:03:24 2024 +0800
+
+    报价购物车实现
+
+[33mcommit a825b126dffade552edd673dfc4e96aff9eec784[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Thu Sep 19 15:55:07 2024 +0800
+
+    修改订单管理界面显示问题
+
+[33mcommit 56d4cbabece597b34ff8093db75e22d6dba21305[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Thu Sep 19 15:38:06 2024 +0800
+
+    页面拆分
+
+[33mcommit d5c70ae28ca2d439248bd7dc5c89aa1d6a98a393[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Thu Sep 19 15:11:32 2024 +0800
+
+    temp storage
+
+[33mcommit 58801bdbcf08c39085108cf8a82a6d0ee92a5680[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Thu Sep 19 09:15:21 2024 +0800
+
+    production endpoint modify
+
+[33mcommit 86771f8c84480f10563e494f6204441ce7bd8d4d[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Wed Sep 18 21:30:43 2024 +0800
+
+    push api implement
+
+[33mcommit 5a1b61152841259de2aa7a995fc8179ae2f040da[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Wed Sep 18 12:00:30 2024 +0800
+
+    toast modified
+
+[33mcommit efdee40bb15897e566570c2cdf982805664ffd05[m
+Merge: 0de0553 128afe0
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Wed Sep 18 11:48:11 2024 +0800
+
+    Merge branch 'main' of https://github.com/LFRPINK/order-management
+
+[33mcommit 0de055322192f6e7f69f0ef22c54bb1f593c8bc4[m
+Author: lfrpink <lfrpink@outlook.com>
+Date:   Wed Sep 18 11:41:02 2024 +0800
+
+    toast 相关修改
+
+[33mcommit 128afe01564387e127ab11ddd28086f20f5e1a19[m
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Wed Sep 18 10:54:01 2024 +0800
+
+    解决订单管理界面，上传为空报错问题
+
+[33mcommit ac1aeba56a5cca3762094d9901110f0d8041da1a[m
+Merge: c5b6b20 7789001
+Author: chenthree <rd.architecture@bqcdz.com>
+Date:   Wed Sep 18 09:4
