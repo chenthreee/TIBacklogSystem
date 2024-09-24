@@ -97,14 +97,14 @@ const OrderTable: React.FC<OrderTableProps> = ({
     setIsDeleteDialogOpen(false);
   };
 
-  // 计算订单的实际总金额（排除已删除的元件）
+  // 修改计算订单实际总金额的函数
   const calculateActualTotal = (order: Order) => {
     return order.components.reduce((sum, component) => {
       const localEdit = localEditedComponents[`${order._id}-${component.id}`];
       const displayComponent = localEdit || component;
-      const isDeleted = displayComponent.isDeleted || displayComponent.status === 'deleted';
+      const isDeleted = displayComponent.status === 'deleted';
       return isDeleted ? sum : sum + (displayComponent.quantity * displayComponent.unitPrice);
-    }, 0);
+    }, 0).toFixed(3); // 保留三位小数
   };
 
   return (
@@ -113,6 +113,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
         <TableHeader>
           <TableRow>
             <TableHead>订单ID</TableHead>
+            <TableHead>TI订单号</TableHead>
             <TableHead>日期</TableHead>
             <TableHead>客户</TableHead>
             <TableHead>总金额</TableHead>
@@ -125,9 +126,10 @@ const OrderTable: React.FC<OrderTableProps> = ({
             <React.Fragment key={order._id}>
               <TableRow>
                 <TableCell>{order.purchaseOrderNumber}</TableCell>
+                <TableCell>{order.tiOrderNumber || '未提交'}</TableCell>
                 <TableCell>{order.date}</TableCell>
                 <TableCell>{order.customer}</TableCell>
-                <TableCell>${calculateActualTotal(order).toFixed(2)}</TableCell>
+                <TableCell>${calculateActualTotal(order)}</TableCell>
                 <TableCell>{order.status}</TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
@@ -137,7 +139,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       onClick={() => handleSubmitOrder(order._id)}
                     >
                       <CheckCircle className="h-4 w-4 mr-1" />
-                      提交
+                      创建提交
                     </Button>
                     <Button
                       variant="ghost"
@@ -145,7 +147,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       onClick={() => handleModifyOrder(order._id)}
                     >
                       <Edit className="h-4 w-4 mr-1" />
-                      修改
+                      变更提交
                     </Button>
                     {/* 删除按钮已被注释掉
                     <Button
@@ -200,15 +202,14 @@ const OrderTable: React.FC<OrderTableProps> = ({
                         {order.components.map((component) => {
                           const localEdit = localEditedComponents[`${order._id}-${component.id}`];
                           const displayComponent = localEdit || component;
-                          const isDeleted = displayComponent.isDeleted || displayComponent.status === 'deleted';
+                          const isDeleted = displayComponent.status === 'deleted';
+                          const componentTotal = isDeleted ? '0.000' : (displayComponent.quantity * displayComponent.unitPrice).toFixed(3);
                           return (
                             <TableRow key={component.id} className={isDeleted ? 'opacity-50' : ''}>
                               <TableCell>{displayComponent.name}</TableCell>
                               <TableCell>{displayComponent.quantity}</TableCell>
-                              <TableCell>${displayComponent.unitPrice?.toFixed(2) ?? '0.00'}</TableCell>
-                              <TableCell>
-                                ${isDeleted ? '0.00' : (displayComponent.quantity * displayComponent.unitPrice).toFixed(2)}
-                              </TableCell>
+                              <TableCell>${displayComponent.unitPrice.toFixed(3)}</TableCell>
+                              <TableCell>${componentTotal}</TableCell>
                               <TableCell>{isDeleted ? '已删除' : displayComponent.status}</TableCell>
                               <TableCell>{displayComponent.deliveryDate}</TableCell>
                               <TableCell>

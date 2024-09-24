@@ -59,13 +59,13 @@ export class TIBacklogASN {
   }
 
   // 按客户订单号获取ASN
-  async retrieveByCustomerOrderNumber(orderNumber: string, requestInvoicePdf = false, requestWaybillPdf = true): Promise<any> {
+  async retrieveByCustomerOrderNumber(orderNumber: string, requestInvoicePdf = true, requestWaybillPdf = false): Promise<any> {
     const url = getEndpoint(`${this.server}/v2/backlog/advanced-shipment-notices/test?customerPurchaseOrderNumber=${orderNumber}&requestCommercialInvoicePDF=${requestInvoicePdf}&requestWaybillPDF=${requestWaybillPdf}`);
     return this.api.get(url);
   }
 
   // 按提单号获取ASN
-  async retrieveByWaybillNumber(waybillNumber: string, requestInvoicePdf = false, requestWaybillPdf = false): Promise<any> {
+  async retrieveByWaybillNumber(waybillNumber: string, requestInvoicePdf = true, requestWaybillPdf = false): Promise<any> {
     const url = getEndpoint(`${this.server}/v2/backlog/advanced-shipment-notices/test?wayBillNumber=${waybillNumber}&requestCommercialInvoicePDF=${requestInvoicePdf}&requestWaybillPDF=${requestWaybillPdf}`);
     return this.api.get(url);
   }

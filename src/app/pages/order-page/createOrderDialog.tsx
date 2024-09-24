@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ interface CreateOrderDialogProps {
     date: string;
     status: string;
     quotationId: string;
-    purchaseOrderNumber: string; // 新增字段
+    purchaseOrderNumber: string;
   };
   setNewOrder: React.Dispatch<React.SetStateAction<any>>;
   handleCreateOrder: () => void;
@@ -28,6 +28,59 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
   handleFileUpload,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [year, setYear] = useState(newOrder.date.split('-')[0] || '');
+  const [month, setMonth] = useState(newOrder.date.split('-')[1] || '');
+  const [day, setDay] = useState(newOrder.date.split('-')[2] || '');
+
+  useEffect(() => {
+    setNewOrder({ ...newOrder, date: `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}` });
+  }, [year, month, day]);
+
+  const isLeapYear = (year: number) => {
+    return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+  };
+
+  const getDaysInMonth = (year: number, month: number) => {
+    const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if (month === 2 && isLeapYear(year)) {
+      return 29;
+    }
+    return daysInMonth[month - 1];
+  };
+
+  const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newYear = e.target.value;
+    setYear(newYear);
+    if (month && day) {
+      const daysInMonth = getDaysInMonth(Number(newYear), Number(month));
+      if (Number(day) > daysInMonth) {
+        setDay(String(daysInMonth));
+      }
+    }
+  };
+
+  const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newMonth = e.target.value;
+    setMonth(newMonth);
+    if (year && day) {
+      const daysInMonth = getDaysInMonth(Number(year), Number(newMonth));
+      if (Number(day) > daysInMonth) {
+        setDay(String(daysInMonth));
+      }
+    }
+  };
+
+  const handleDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDay = e.target.value;
+    if (year && month) {
+      const daysInMonth = getDaysInMonth(Number(year), Number(month));
+      if (Number(newDay) <= daysInMonth) {
+        setDay(newDay);
+      }
+    } else {
+      setDay(newDay);
+    }
+  };
 
   return (
     <Dialog open={isCreateOrderDialogOpen} onOpenChange={setIsCreateOrderDialogOpen}>
@@ -48,13 +101,35 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="date" className="text-right">日期</Label>
-            <Input
-              id="date"
-              type="date"
-              value={newOrder.date}
-              onChange={(e) => setNewOrder({ ...newOrder, date: e.target.value })}
-              className="col-span-3"
-            />
+            <div className="col-span-3 flex">
+              <Input
+                type="number"
+                placeholder="年"
+                value={year}
+                onChange={handleYearChange}
+                className="w-1/3 mr-2"
+                min="1900"
+                max="2100"
+              />
+              <Input
+                type="number"
+                placeholder="月"
+                value={month}
+                onChange={handleMonthChange}
+                className="w-1/3 mr-2"
+                min="1"
+                max="12"
+              />
+              <Input
+                type="number"
+                placeholder="日"
+                value={day}
+                onChange={handleDayChange}
+                className="w-1/3"
+                min="1"
+                max={year && month ? getDaysInMonth(Number(year), Number(month)) : 31}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="status" className="text-right">状态</Label>
