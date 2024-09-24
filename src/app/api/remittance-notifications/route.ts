@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const query = {
     $or: [
       { remittanceNumber: { $regex: searchTerm, $options: 'i' } },
-      { invoiceNumber: { $regex: searchTerm, $options: 'i' } }
+      { 'items.invoiceNumber': { $regex: searchTerm, $options: 'i' } }
     ]
   };
 
@@ -21,9 +21,8 @@ export async function GET(request: NextRequest) {
       id: notification._id.toString(),
       remittanceNumber: notification.remittanceNumber,
       currency: notification.currency,
-      invoiceNumber: notification.invoiceNumber,
-      amount: notification.amount,
-      paymentDate: notification.paymentDate
+      paymentDate: notification.paymentDate,
+      items: notification.items
     }));
     return NextResponse.json(formattedNotifications);
   } catch (error) {
@@ -37,13 +36,20 @@ export async function POST(request: NextRequest) {
 
   try {
     const data = await request.json();
-    console.log('Received data:', data); // 添加日志
-    const newNotification = new RemittanceNotification(data);
-    const savedNotification = await newNotification.save();
-    console.log('Saved notification:', savedNotification); // 添加日志
+    console.log('Received data:', JSON.stringify(data, null, 2));
+
+    // 直接创建新的通知，不进行验证
+    const savedNotification = await RemittanceNotification.create(data);
+
+    console.log('Saved notification:', JSON.stringify(savedNotification.toObject(), null, 2));
+
     return NextResponse.json(savedNotification, { status: 201 });
   } catch (error) {
-    console.error('Error creating remittance notification:', error as Error);
-    return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
+    console.error('Error creating remittance notification:', error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+    } else {
+      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
   }
 }

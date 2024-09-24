@@ -4,9 +4,9 @@ import { TIBacklogRemittance } from "@/lib/external/TIBacklogAPI";
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    const { remittanceNumber, invoiceNumber, amount, currency } = data;
+    const { remittanceNumber, items, currency } = data;
 
-    console.log('Sending remittance to TI:', { remittanceNumber, invoiceNumber, amount, currency });
+    console.log('Sending remittance to TI:', { remittanceNumber, items, currency });
 
     const remittanceAPI = new TIBacklogRemittance(
       process.env.CLIENT_ID || '',
@@ -14,10 +14,10 @@ export async function POST(request: NextRequest) {
       process.env.SERVER_URL || ''
     );
 
-    const lineItems = [{
-      paymentAmount: amount.toString(),
-      financialDocumentNumber: invoiceNumber
-    }];
+    const lineItems = items.map((item: { invoiceNumber: string; amount: number }) => ({
+      paymentAmount: item.amount.toString(),
+      financialDocumentNumber: item.invoiceNumber
+    }));
 
     const response = await remittanceAPI.postRemittance(
       remittanceNumber,

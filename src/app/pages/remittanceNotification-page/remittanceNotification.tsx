@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Plus, Search, Calendar, Trash2, Send } from "lucide-react"
+import { Plus, Search, Calendar, Trash2, Send, ChevronDown, ChevronUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -33,13 +33,17 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
+interface RemittanceItem {
+  invoiceNumber: string;
+  amount: number;
+}
+
 interface RemittanceInfo {
-  id: string
-  remittanceNumber: string
-  currency: string
-  invoiceNumber: string
-  amount: number
-  paymentDate: Date
+  id: string;
+  remittanceNumber: string;
+  currency: string;
+  paymentDate: Date;
+  items: RemittanceItem[];
 }
 
 export default function RemittanceNotification() {
@@ -47,10 +51,10 @@ export default function RemittanceNotification() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [remittanceNumber, setRemittanceNumber] = useState("")
   const [currency, setCurrency] = useState("")
-  const [invoiceNumber, setInvoiceNumber] = useState("")
-  const [amount, setAmount] = useState("")
   const [paymentDate, setPaymentDate] = useState<Date>(new Date())
   const [searchTerm, setSearchTerm] = useState("")
+  const [items, setItems] = useState<RemittanceItem[]>([{ invoiceNumber: '', amount: 0 }]);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchRemittances();
@@ -77,9 +81,8 @@ export default function RemittanceNotification() {
     const newRemittance = {
       remittanceNumber,
       currency,
-      invoiceNumber,
-      amount: parseFloat(amount),
-      paymentDate: paymentDate.toISOString(), // 确保日期格式正确
+      paymentDate: paymentDate.toISOString(),
+      items: items.filter(item => item.invoiceNumber && item.amount > 0),
     };
     try {
       const response = await fetch('/api/remittance-notifications', {
@@ -100,7 +103,7 @@ export default function RemittanceNotification() {
         description: "新的汇款通知已成功添加到列表中。",
       });
       resetForm();
-      fetchRemittances(); // 重新获取所有汇款通知
+      fetchRemittances();
     } catch (error) {
       console.error('Error adding remittance:', error);
       toast({
@@ -112,12 +115,25 @@ export default function RemittanceNotification() {
   };
 
   const resetForm = () => {
-    setRemittanceNumber("")
-    setCurrency("")
-    setInvoiceNumber("")
-    setAmount("")
-    setPaymentDate(new Date())
+    setRemittanceNumber("");
+    setCurrency("");
+    setPaymentDate(new Date());
+    setItems([{ invoiceNumber: '', amount: 0 }]);
   }
+
+  const addItem = () => {
+    setItems([...items, { invoiceNumber: '', amount: 0 }]);
+  };
+
+  const removeItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
+  const updateItem = (index: number, field: keyof RemittanceItem, value: string | number) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
+  };
 
   const handleDelete = async (id: string) => {
     if (!id) {
@@ -167,8 +183,7 @@ export default function RemittanceNotification() {
         },
         body: JSON.stringify({
           remittanceNumber: remittance.remittanceNumber,
-          invoiceNumber: remittance.invoiceNumber,
-          amount: remittance.amount,
+          items: remittance.items,
           currency: remittance.currency
         }),
       });
@@ -194,10 +209,22 @@ export default function RemittanceNotification() {
     }
   }
 
+  const toggleRowExpansion = (id: string) => {
+    setExpandedRows(prevExpandedRows => {
+      const newExpandedRows = new Set(prevExpandedRows);
+      if (newExpandedRows.has(id)) {
+        newExpandedRows.delete(id);
+      } else {
+        newExpandedRows.add(id);
+      }
+      return newExpandedRows;
+    });
+  };
+
   const filteredRemittances = remittances.filter(
     (remittance) =>
       remittance.remittanceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      remittance.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
+      remittance.items.some(item => item.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   return (
@@ -255,32 +282,6 @@ export default function RemittanceNotification() {
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="invoiceNumber" className="text-right">
-                    发票号
-                  </Label>
-                  <Input
-                    id="invoiceNumber"
-                    value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="amount" className="text-right">
-                    付款金额
-                  </Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="paymentDate" className="text-right">
                     付款日期
                   </Label>
@@ -307,6 +308,44 @@ export default function RemittanceNotification() {
                     </PopoverContent>
                   </Popover>
                 </div>
+                {items.map((item, index) => (
+                  <div key={index} className="grid gap-2">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor={`invoiceNumber-${index}`} className="text-right">
+                        发票号
+                      </Label>
+                      <Input
+                        id={`invoiceNumber-${index}`}
+                        value={item.invoiceNumber}
+                        onChange={(e) => updateItem(index, 'invoiceNumber', e.target.value)}
+                        className="col-span-3"
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor={`amount-${index}`} className="text-right">
+                        付款金额
+                      </Label>
+                      <Input
+                        id={`amount-${index}`}
+                        type="number"
+                        step="0.01"
+                        value={item.amount}
+                        onChange={(e) => updateItem(index, 'amount', parseFloat(e.target.value))}
+                        className="col-span-3"
+                        required
+                      />
+                    </div>
+                    {index > 0 && (
+                      <Button type="button" variant="outline" onClick={() => removeItem(index)}>
+                        删除
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button type="button" variant="outline" onClick={addItem}>
+                  添加发票
+                </Button>
               </div>
               <DialogFooter>
                 <Button type="submit">确定</Button>
@@ -320,41 +359,83 @@ export default function RemittanceNotification() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead></TableHead>
               <TableHead>内部汇款编号</TableHead>
-              <TableHead>发票号</TableHead>
               <TableHead>货币类型</TableHead>
-              <TableHead>付款金额</TableHead>
               <TableHead>付款日期</TableHead>
+              <TableHead>发票数量</TableHead>
+              <TableHead>总金额</TableHead>
               <TableHead>操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredRemittances.map((remittance) => (
-              <TableRow key={remittance.id}>
-                <TableCell>{remittance.remittanceNumber}</TableCell>
-                <TableCell>{remittance.invoiceNumber}</TableCell>
-                <TableCell>{remittance.currency}</TableCell>
-                <TableCell>{remittance.amount.toFixed(2)}</TableCell>
-                <TableCell>{format(new Date(remittance.paymentDate), "yyyy-MM-dd")}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
+              <>
+                <TableRow key={remittance.id}>
+                  <TableCell>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleSendTI(remittance)}
+                      onClick={() => toggleRowExpansion(remittance.id)}
                     >
-                      <Send className="h-4 w-4" />
+                      {expandedRows.has(remittance.id) ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(remittance.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+                  </TableCell>
+                  <TableCell>{remittance.remittanceNumber}</TableCell>
+                  <TableCell>{remittance.currency}</TableCell>
+                  <TableCell>{format(new Date(remittance.paymentDate), "yyyy-MM-dd")}</TableCell>
+                  <TableCell>{remittance.items && Array.isArray(remittance.items) ? remittance.items.length : 0}</TableCell>
+                  <TableCell>
+                    {remittance.items && Array.isArray(remittance.items) 
+                      ? remittance.items.reduce((sum, item) => sum + (item.amount || 0), 0).toFixed(2)
+                      : '0.00'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSendTI(remittance)}
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(remittance.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+                {expandedRows.has(remittance.id) && (
+                  <TableRow>
+                    <TableCell colSpan={7}>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>发票号码</TableHead>
+                            <TableHead>金额</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {remittance.items.map((item, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{item.invoiceNumber}</TableCell>
+                              <TableCell>{item.amount.toFixed(2)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
             ))}
           </TableBody>
         </Table>
