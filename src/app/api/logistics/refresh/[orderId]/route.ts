@@ -82,7 +82,7 @@ export async function GET(
     // 保存更新后的订单信息到数据库（不包括 commercialInvoicePDF）
     await Order.findOneAndUpdate(
       { orderNumber: orderId },
-      { $set: { components: updatedComponents.map((c:any) => ({ ...c, commercialInvoicePDF: undefined })) } },
+      { $set: { components: updatedComponents.map((c: any) => ({ ...c, commercialInvoicePDF: undefined })) } },
       { new: true }
     )
 
