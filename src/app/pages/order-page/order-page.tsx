@@ -27,7 +27,8 @@ interface Order {
   tiOrderNumber: string
   quotationId: string
   purchaseOrderNumber: string
-  components: Component[]
+  components: Component[],
+  quoteNumber: string,
 }
 
 interface Component {
@@ -291,15 +292,18 @@ export default function OrderManagement() {
   const handleCreateOrder = async () => {
     try {
       // 首先获取报价单信息
-      const quotationResponse = await fetch(`/api/quotations/${newOrder.quotationId}`);
+      const quotationResponse = await fetch(`/api/quotations?quoteNumber=${newOrder.quoteNumber}`);
       const quotationData = await quotationResponse.json();
 
       if (!quotationData.success) {
         throw new Error('获取报价单失败');
       }
 
+      // 获取第一个匹配的报价单
+      const quotation = quotationData.quotations[0];
+
       // 将报价单中的组件与Excel数据进行匹配,只保留能在Excel中找到的组件
-      const matchedComponents = quotationData.quotation.components
+      const matchedComponents = quotation.components
         .map((component: any) => {
           const excelMatch = excelData.find((row: any) => row['规格描述'].includes(component.name));
           if (excelMatch) {
@@ -320,7 +324,7 @@ export default function OrderManagement() {
               type: excelMatch['类型'],
               description: excelMatch['规格描述'],
               deliveryDate: deliveryDate,
-              quoteNumber: quotationData.quotation.quoteNumber // 添加报价单号
+              quoteNumber: quotation.quoteNumber // 添加报价单号
             };
           }
           return null; // 如果没有匹配,返回null
@@ -334,10 +338,12 @@ export default function OrderManagement() {
 
       const orderData = {
         ...newOrder,
+        quotationId: quotation.id, // 设置 quotationId
+        orderNumber: newOrder.purchaseOrderNumber, // 设置 orderNumber
         components: matchedComponents,
-        totalAmount: matchedComponents.reduce((sum: number, comp: any) => sum + (comp.quantity * comp.unitPrice), 0),
+        totalAmount: matchedComponents.reduce((sum: number, comp: any) => sum + (comp.quantity * comp.tiPrice), 0),
       };
-
+      
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
@@ -347,7 +353,8 @@ export default function OrderManagement() {
       });
 
       if (!response.ok) {
-        throw new Error('创建订单失败');
+        const errorData = await response.json();
+        throw new Error(errorData.error || '创建订单失败');
       }
 
       await fetchData();
@@ -356,7 +363,7 @@ export default function OrderManagement() {
         date: new Date().toISOString().split('T')[0],
         customer: "",
         status: "处理中",
-        quotationId: "",
+        quoteNumber: "", // 修改为 quoteNumber
         purchaseOrderNumber: "",
         components: [],
         totalAmount: 0,
@@ -371,7 +378,7 @@ export default function OrderManagement() {
       console.error('创建订单时出错:', error);
       toast({
         title: "错误",
-        description: "创建订单失败，请稍后重试。",
+        description: `创建订单失败，请稍后重试。错误信息: ${(error as Error).message}`,
         variant: "destructive",
       });
     }

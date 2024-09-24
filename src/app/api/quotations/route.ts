@@ -1,13 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Quotation from '@/models/Quotation';
 
-// 模拟数据库中的报价数据
-export async function GET() {
+export async function GET(request: NextRequest) {
+  await dbConnect();
+
+  const searchParams = request.nextUrl.searchParams;
+  const quoteNumber = searchParams.get('quoteNumber');
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const limit = parseInt(searchParams.get('limit') || '10', 10);
+  const skip = (page - 1) * limit;
+
+  const query = quoteNumber ? { quoteNumber: { $regex: quoteNumber, $options: 'i' } } : {};
+
   try {
-    await dbConnect();
-    const quotations = await Quotation.find({}).lean();
-    
+    const quotations = await Quotation.find(query).skip(skip).limit(limit).lean();
+    const totalQuotations = await Quotation.countDocuments(query);
+
     const formattedQuotations = quotations.map((q) => ({
       id: q._id?.toString(),
       date: q.date || 'N/A',
@@ -28,7 +37,7 @@ export async function GET() {
       })) : []
     }));
 
-    return NextResponse.json(formattedQuotations);
+    return NextResponse.json({ success: true, quotations: formattedQuotations, totalQuotations });
   } catch (error) {
     console.error('Error in GET /api/quotations:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

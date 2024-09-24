@@ -47,7 +47,7 @@ function QuotationTable({
                 <TableCell>{quotation.quoteNumber || '未提交'}</TableCell>
                 <TableCell>{quotation.date}</TableCell>
                 <TableCell>{quotation.customer}</TableCell>
-                <TableCell>${quotation.totalAmount.toFixed(2)}</TableCell>
+                <TableCell>${quotation.totalAmount.toFixed(3)}</TableCell>
                 <TableCell>{quotation.status}</TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
@@ -124,9 +124,9 @@ function QuotationTable({
                             <TableCell>{component.quantity}</TableCell>
                             <TableCell>{component.moq ?? 'N/A'}</TableCell>
                             <TableCell>{component.nq ?? 'N/A'}</TableCell>
-                            <TableCell>${component.unitPrice.toFixed(2)}</TableCell>
-                            <TableCell>${component.tiPrice.toFixed(2)}</TableCell>
-                            <TableCell>${(component.quantity * component.unitPrice).toFixed(2)}</TableCell>
+                            <TableCell>${component.unitPrice.toFixed(3)}</TableCell>
+                            <TableCell>${component.tiPrice.toFixed(3)}</TableCell>
+                            <TableCell>${(component.quantity * component.unitPrice).toFixed(3)}</TableCell>
                             <TableCell>{component.status}</TableCell>
                             <TableCell>
                               <div className="flex space-x-2">

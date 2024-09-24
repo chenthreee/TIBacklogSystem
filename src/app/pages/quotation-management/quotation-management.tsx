@@ -10,7 +10,7 @@ import AddComponentDialog from './components/AddComponentDialog';
 
 // 定义Quotation类型
 interface Quotation {
-  //id: string;
+  id: string;
   date: string;
   customer: string;
   totalAmount: number;
@@ -33,42 +33,22 @@ interface Component {
 
 const fetchQuotations = async (page: number, searchTerm: string) => {
   try {
-    const response = await fetch("/api/quotations");
+    const response = await fetch(`/api/quotations?quoteNumber=${searchTerm}&page=${page}&limit=10`);
     const data = await response.json();
-    console.log("Fetched data:", JSON.stringify(data, null, 2));
 
-    if (!Array.isArray(data)) {
+    if (!data.success) {
       console.error("Unexpected data format:", data);
       return { quotations: [], totalPages: 0 };
     }
 
-    const filteredQuotations = data.filter(
-      (q: Quotation) =>
-        (typeof q.customer === "string" &&
-          q.customer.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (typeof q.date === "string" && q.date.includes(searchTerm))
-    );
-
     const pageSize = 10;
-    const startIndex = (page - 1) * pageSize;
+    const totalPages = Math.ceil(data.totalQuotations / pageSize);
 
-    const paginatedQuotations = filteredQuotations.slice(
-      startIndex,
-      startIndex + pageSize
-    ).map((q: any) => ({
-      ...q,
-      components: q.components.map((c: any) => ({
-        ...c,
-        moq: c.moq || 0,
-        nq: c.nq || 0
-      }))
-    }));
-
-    console.log("Paginated quotations:", JSON.stringify(paginatedQuotations, null, 2));
+    console.log("Paginated quotations:", JSON.stringify(data.quotations, null, 2));
 
     return {
-      quotations: paginatedQuotations,
-      totalPages: Math.ceil(data.length / pageSize),
+      quotations: data.quotations,
+      totalPages: totalPages,
     };
   } catch (error) {
     console.error("Error fetching quotations:", error);

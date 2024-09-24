@@ -36,19 +36,29 @@ export async function POST(request: Request) {
     await dbConnect();
     const data = await request.json();
     
-    // 确保 components 包含 moq 和 nq
+    console.log('Received data:', JSON.stringify(data, null, 2));
+    // 确保 components 包含 moq 和 nq，并将 unitPrice 设置为 tiPrice
     const components = data.components.map((component: any) => ({
       ...component,
+      unitPrice: component.tiPrice, // 将 unitPrice 设置为 tiPrice
       moq: component.moq || 0,
       nq: component.nq || 0,
     }));
 
+    // 创建新订单
     const newOrder = new Order({
       ...data,
+      orderNumber: data.purchaseOrderNumber, // 将 purchaseOrderNumber 赋值给 orderNumber
       components,
     });
 
+    // 保存订单
     const savedOrder = await newOrder.save();
+
+    // 更新 quotationId 为当前订单的 ObjectId
+    savedOrder.quotationId = savedOrder._id;
+    await savedOrder.save();
+
     return NextResponse.json(savedOrder, { status: 201 });
   } catch (error) {
     console.error('Error in POST /api/orders:', error);

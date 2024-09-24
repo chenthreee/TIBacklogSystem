@@ -11,7 +11,7 @@ interface CreateOrderDialogProps {
     customer: string;
     date: string;
     status: string;
-    quotationId: string;
+    quoteNumber: string;
     purchaseOrderNumber: string;
   };
   setNewOrder: React.Dispatch<React.SetStateAction<any>>;
@@ -141,11 +141,11 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="quotationId" className="text-right">报价ID</Label>
+            <Label htmlFor="quoteNumber" className="text-right">TI报价号</Label>
             <Input
-              id="quotationId"
-              value={newOrder.quotationId}
-              onChange={(e) => setNewOrder({ ...newOrder, quotationId: e.target.value })}
+              id="quoteNumber"
+              value={newOrder.quoteNumber}
+              onChange={(e) => setNewOrder({ ...newOrder, quoteNumber: e.target.value })}
               className="col-span-3"
             />
           </div>
