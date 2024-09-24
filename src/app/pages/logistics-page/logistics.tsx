@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, RefreshCw, Info } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { ChevronLeft, ChevronRight, RefreshCw, Info, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -32,6 +32,7 @@ interface LogisticsComponent {
   shippingDate: string
   estimatedDateOfArrival: string
   carrier: string
+  commercialInvoicePDF?: string
 }
 
 const fetchLogisticsInfo = async (page: number, searchTerm: string): Promise<{ logisticsInfo: LogisticsInfo[], totalPages: number }> => {
@@ -82,6 +83,17 @@ export default function LogisticsInformation() {
     setCurrentPage(1)
   }
 
+  const createBlobUrl = useCallback((base64Data: string) => {
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], {type: 'application/pdf'});
+    return URL.createObjectURL(blob);
+  }, []);
+
   const handleRefresh = async (orderId: string) => {
     try {
       const response = await fetch(`/api/logistics/refresh/${orderId}`);
@@ -96,7 +108,12 @@ export default function LogisticsInformation() {
         info.orderId === orderId
           ? {
               ...info,
-              components: data.components || info.components
+              components: data.components.map((component: LogisticsComponent) => ({
+                ...component,
+                commercialInvoicePDF: component.commercialInvoicePDF 
+                  ? createBlobUrl(component.commercialInvoicePDF)
+                  : undefined
+              }))
             }
           : info
       ));
@@ -168,7 +185,7 @@ export default function LogisticsInformation() {
                           详情
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-[425px] bg-white">
+                      <DialogContent className="sm:max-w-[725px] bg-white">
                         <DialogHeader>
                           <DialogTitle>物流详情 - {info.orderId}</DialogTitle>
                           <DialogDescription>
@@ -183,6 +200,7 @@ export default function LogisticsInformation() {
                                 <TableHead>发货日期</TableHead>
                                 <TableHead>预计到达日期</TableHead>
                                 <TableHead>物流单号</TableHead>
+                                <TableHead>商业发票</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -192,6 +210,19 @@ export default function LogisticsInformation() {
                                   <TableCell>{component.shippingDate || '未发货'}</TableCell>
                                   <TableCell>{component.estimatedDateOfArrival || '未知'}</TableCell>
                                   <TableCell>{component.carrier || '无'}</TableCell>
+                                  <TableCell>
+                                    {component.commercialInvoicePDF ? (
+                                      <a 
+                                        href={component.commercialInvoicePDF} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center text-blue-600 hover:text-blue-800"
+                                      >
+                                        <FileText className="h-4 w-4 mr-1" />
+                                        查看发票
+                                      </a>
+                                    ) : '无'}
+                                  </TableCell>
                                 </TableRow>
                               ))}
                             </TableBody>

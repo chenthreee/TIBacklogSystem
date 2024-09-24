@@ -35,8 +35,6 @@ export async function GET(
 
     // 处理所有的 consolidatedInformation
     tiResponse.data.consolidatedInformation.forEach((consolidatedInfo: any) => {
-      //console.error('consolidatedInfo:', JSON.stringify(consolidatedInfo, null, 2))
-
       if (!consolidatedInfo.bookingOrderDetails) {
         console.error('TI ASN API 响应中缺少 bookingOrderDetails')
         return // 跳过这个 consolidatedInfo
@@ -52,7 +50,8 @@ export async function GET(
                   ...item,
                   shippingDate: consolidatedInfo.shippingDate,
                   estimatedDateOfArrival: consolidatedInfo.estimatedDateOfArrival,
-                  carrier: consolidatedInfo.carrierShipmentMasterTrackingNumber
+                  carrier: consolidatedInfo.carrierShipmentMasterTrackingNumber,
+                  commercialInvoicePDF: consolidatedInfo.commercialInvoiceList?.[0]?.commercialInvoicePDF
                 })
               })
             }
@@ -61,40 +60,35 @@ export async function GET(
       })
     })
 
-    // 打印 itemDetailsMap 的内容
-    console.error('\x1b[31m%s\x1b[0m', 'itemDetailsMap contents:')
-    Array.from(itemDetailsMap).forEach(([key, value]) => {
-      console.error('\x1b[31m%s\x1b[0m', `Key: ${key}, Value:`, JSON.stringify(value, null, 2))
-    })
-
     // 更新每个组件的信息
-    order.components.forEach((component: any) => {
+    const updatedComponents = order.components.map((component: any) => {
       const matchingItem = itemDetailsMap.get(component.name)
       
-      console.error('\x1b[31m%s\x1b[0m', 'Matching attempt:', JSON.stringify({
-        componentName: component.name,
-        matchingItem: matchingItem ? matchingItem.tiPartNumber : 'Not found'
-      }))
-
       if (matchingItem) {
+        // 更新组件信息，但不包括 commercialInvoicePDF
         component.shippingDate = matchingItem.shippingDate
         component.estimatedDateOfArrival = matchingItem.estimatedDateOfArrival
         component.carrier = matchingItem.carrier
-        console.log('更新的组件信息:', JSON.stringify(component, null, 2))
-      } else {
-        console.warn(`未找到匹配的组件: ${component.name}`)
+        
+        // 返回更新后的组件，包括 commercialInvoicePDF（仅用于前端显示）
+        return {
+          ...component.toObject(),
+          commercialInvoicePDF: matchingItem.commercialInvoicePDF
+        }
       }
+      return component.toObject()
     })
 
-    // 保存订单信息到数据库
-    await order.save()
-
-    // 打印更新后的订单信息
-    console.log('更新后的订单信息:', JSON.stringify(order, null, 2))
+    // 保存更新后的订单信息到数据库（不包括 commercialInvoicePDF）
+    await Order.findOneAndUpdate(
+      { orderNumber: orderId },
+      { $set: { components: updatedComponents.map((c:any) => ({ ...c, commercialInvoicePDF: undefined })) } },
+      { new: true }
+    )
 
     return NextResponse.json({ 
       success: true, 
-      components: order.components,
+      components: updatedComponents, // 包含 commercialInvoicePDF，用于前端显示
       tiResponse
     }, { status: 200 })
   } catch (error) {

@@ -402,8 +402,19 @@ export default function QuotationManagement() {
       }
 
       const updatedQuotation = await response.json();
-      setQuotations(quotations.map(q => q.id === currentQuotationId ? updatedQuotation : q));
+      
+      // 更新本地状态
+      setQuotations(prevQuotations => 
+        prevQuotations.map(q => 
+          q.id === currentQuotationId ? updatedQuotation : q
+        )
+      );
+
       setIsAddComponentDialogOpen(false);  // 关闭对话框
+
+      // 立即重新获取数据以确保显示最新信息
+      await fetchData();
+
       toast({
         title: "组件已添加",
         description: "新的组件已成功添加到报价单中。",

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, RefreshCw, Info } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { ChevronLeft, ChevronRight, RefreshCw, Info, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -24,7 +24,7 @@ interface InvoiceInfo {
   orderId: string
   customer: string
   components: InvoiceComponent[]
-  pdfUrl?: string  // 添加这个字段
+  pdfUrl?: string
 }
 
 interface InvoiceComponent {
@@ -35,7 +35,6 @@ interface InvoiceComponent {
   invoiceDate: string
 }
 
-// Mock function to fetch invoice information (replace with actual API call)
 const fetchInvoiceInfo = async (page: number, searchTerm: string): Promise<{ invoiceInfo: InvoiceInfo[], totalPages: number }> => {
   const response = await fetch(`/api/invoices?page=${page}&searchTerm=${encodeURIComponent(searchTerm)}`);
   if (!response.ok) {
@@ -52,6 +51,17 @@ export default function FinancialInvoice() {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
+  const createBlobUrl = useCallback((base64Data: string) => {
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], {type: 'application/pdf'});
+    return URL.createObjectURL(blob);
+  }, []);
+
   useEffect(() => {
     fetchData()
   }, [currentPage, searchTerm])
@@ -60,7 +70,10 @@ export default function FinancialInvoice() {
     setIsLoading(true);
     try {
       const data = await fetchInvoiceInfo(currentPage, searchTerm);
-      setInvoiceInfo(data.invoiceInfo);
+      setInvoiceInfo(data.invoiceInfo.map(info => ({
+        ...info,
+        pdfUrl: info.pdfUrl ? createBlobUrl(info.pdfUrl.split(',')[1]) : undefined
+      })));
       setTotalPages(data.totalPages);
     } catch (error) {
       console.error('Error fetching invoice data:', error);
@@ -87,10 +100,12 @@ export default function FinancialInvoice() {
       }
       const data = await response.json();
 
-      // 更新特定订单的信息
       setInvoiceInfo(prevInfo => prevInfo.map(info => 
         info.orderId === orderId 
-          ? { ...info, pdfUrl: data.pdfUrl }  // 添加 pdfUrl 到订单信息中
+          ? { 
+              ...info, 
+              pdfUrl: data.pdfUrl ? createBlobUrl(data.pdfUrl.split(',')[1]) : undefined
+            }
           : info
       ));
 
@@ -114,6 +129,17 @@ export default function FinancialInvoice() {
       description: "所有发票信息已更新。",
     })
   }
+
+  useEffect(() => {
+    return () => {
+      // 清理所有创建的 Blob URLs
+      invoiceInfo.forEach(info => {
+        if (info.pdfUrl) {
+          URL.revokeObjectURL(info.pdfUrl);
+        }
+      });
+    };
+  }, [invoiceInfo]);
 
   return (
     <div className="space-y-4">
@@ -204,8 +230,9 @@ export default function FinancialInvoice() {
                         href={info.pdfUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="ml-2 text-blue-600 hover:underline"
+                        className="ml-2 flex items-center text-blue-600 hover:text-blue-800"
                       >
+                        <FileText className="h-4 w-4 mr-1" />
                         查看 PDF
                       </a>
                     )}
