@@ -105,7 +105,9 @@ const OrderTable: React.FC<OrderTableProps> = ({
       const localEdit = localEditedComponents[`${order._id}-${component.id}`];
       const displayComponent = localEdit || component;
       const isDeleted = displayComponent.status === 'deleted';
-      return isDeleted ? sum : sum + (displayComponent.quantity * displayComponent.unitPrice);
+      const quantity = displayComponent.quantity || 0;
+      const unitPrice = displayComponent.unitPrice || 0;
+      return isDeleted ? sum : sum + (quantity * unitPrice);
     }, 0).toFixed(3); // 保留三位小数
   };
 
@@ -207,14 +209,16 @@ const OrderTable: React.FC<OrderTableProps> = ({
                           const localEdit = localEditedComponents[`${order._id}-${component.id}`];
                           const displayComponent = localEdit || component;
                           const isDeleted = displayComponent.status === 'deleted';
-                          const componentTotal = isDeleted ? '0.000' : (displayComponent.quantity * displayComponent.unitPrice).toFixed(3);
+                          const quantity = displayComponent.quantity || 0;
+                          const unitPrice = displayComponent.unitPrice || 0;
+                          const componentTotal = isDeleted ? '0.000' : (quantity * unitPrice).toFixed(3);
                           return (
                             <TableRow key={component.id} className={isDeleted ? 'opacity-50' : ''}>
                               <TableCell>{displayComponent.name}</TableCell>
-                              <TableCell>{displayComponent.quantity}</TableCell>
+                              <TableCell>{quantity}</TableCell>
                               <TableCell>{displayComponent.moq}</TableCell> {/* 显示 MOQ */}
                               <TableCell>{displayComponent.nq}</TableCell> {/* 显示 NQ */}
-                              <TableCell>${displayComponent.unitPrice.toFixed(3)}</TableCell>
+                              <TableCell>${unitPrice.toFixed(3)}</TableCell>
                               <TableCell>${componentTotal}</TableCell>
                               <TableCell>{isDeleted ? '已删除' : displayComponent.status}</TableCell>
                               <TableCell>{displayComponent.deliveryDate}</TableCell>
