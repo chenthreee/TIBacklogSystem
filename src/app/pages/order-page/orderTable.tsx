@@ -55,6 +55,8 @@ interface Component {
   type: string;
   description: string;
   confirmations?: Confirmation[];
+  moq: number; // 添加 moq 字段
+  nq: number; // 添加 nq 字段
 }
 
 interface OrderTableProps {
@@ -190,6 +192,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
                         <TableRow>
                           <TableHead>元件名称</TableHead>
                           <TableHead>数量</TableHead>
+                          <TableHead>MOQ</TableHead> {/* 新增 MOQ 列 */}
+                          <TableHead>NQ</TableHead> {/* 新增 NQ 列 */}
                           <TableHead>单价</TableHead>
                           <TableHead>小计</TableHead>
                           <TableHead>状态</TableHead>
@@ -208,6 +212,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
                             <TableRow key={component.id} className={isDeleted ? 'opacity-50' : ''}>
                               <TableCell>{displayComponent.name}</TableCell>
                               <TableCell>{displayComponent.quantity}</TableCell>
+                              <TableCell>{displayComponent.moq}</TableCell> {/* 显示 MOQ */}
+                              <TableCell>{displayComponent.nq}</TableCell> {/* 显示 NQ */}
                               <TableCell>${displayComponent.unitPrice.toFixed(3)}</TableCell>
                               <TableCell>${componentTotal}</TableCell>
                               <TableCell>{isDeleted ? '已删除' : displayComponent.status}</TableCell>
