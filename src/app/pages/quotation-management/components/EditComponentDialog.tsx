@@ -24,7 +24,7 @@ function EditComponentDialog({ editingComponent, setEditingComponent, handleSave
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="edit-quantity" className="text-right">
-              数量
+              年用量
             </Label>
             <Input
               id="edit-quantity"

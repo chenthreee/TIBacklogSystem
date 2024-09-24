@@ -107,7 +107,7 @@ function QuotationTable({
                       <TableHeader>
                         <TableRow>
                           <TableHead>元件名称</TableHead>
-                          <TableHead>数量</TableHead>
+                          <TableHead>年用量</TableHead>
                           <TableHead>报价</TableHead>
                           <TableHead>TI返回价格</TableHead>
                           <TableHead>小计</TableHead>

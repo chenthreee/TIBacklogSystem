@@ -46,7 +46,7 @@ function AddComponentDialog({ isOpen, setIsOpen, handleAddComponent }: AddCompon
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="component-quantity" className="text-right">
-              数量
+              年用量
             </Label>
             <Input
               id="component-quantity"
