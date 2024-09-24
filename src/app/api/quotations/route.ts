@@ -1,28 +1,15 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Quotation from '@/models/Quotation';
-import { checkQuotationDataTypes} from '@/lib/dataTypeChecker';
 
 // 模拟数据库中的报价数据
 export async function GET() {
   try {
-    console.log('Connecting to database...');
     await dbConnect();
-    console.log('Database connected successfully');
-
-    console.log('Fetching quotations...');
     const quotations = await Quotation.find({}).lean();
     
-    const dataTypes = checkQuotationDataTypes(quotations);
-
-    if (!dataTypes.isArray) {
-      return NextResponse.json({ error: 'Data is not an array' }, { status: 500 });
-    }
-
-
-    // 直接映射主文档中的数据
     const formattedQuotations = quotations.map((q) => ({
-      id: q._id?.toString(),  // 将 MongoDB ObjectId 转为字符串
+      id: q._id?.toString(),
       date: q.date || 'N/A',
       customer: q.customer || 'N/A',
       totalAmount: q.totalAmount ? Number(q.totalAmount) : 0,
@@ -35,15 +22,16 @@ export async function GET() {
         unitPrice: Number(c.unitPrice) || 0,
         tiPrice: Number(c.tiPrice) || 0,
         deliveryDate: c.deliveryDate || 'N/A',
-        status: c.status || 'N/A'
+        status: c.status || 'N/A',
+        moq: Number(c.moq) || 0,
+        nq: Number(c.nq) || 0
       })) : []
     }));
 
     return NextResponse.json(formattedQuotations);
   } catch (error) {
     console.error('Error in GET /api/quotations:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: 'Internal Server Error', details: errorMessage }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 

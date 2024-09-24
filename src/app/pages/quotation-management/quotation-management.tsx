@@ -27,10 +27,11 @@ interface Component {
   tiPrice: number;
   status: string;
   deliveryDate: string; // 新增交期字段
+  moq: number; // 新增 MOQ 字段
+  nq: number; // 新增 NQ 字段
 }
 
 const fetchQuotations = async (page: number, searchTerm: string) => {
-  // 这里应该是实际的API调用
   try {
     const response = await fetch("/api/quotations");
     const data = await response.json();
@@ -48,20 +49,25 @@ const fetchQuotations = async (page: number, searchTerm: string) => {
         (typeof q.date === "string" && q.date.includes(searchTerm))
     );
 
-
     const pageSize = 10;
     const startIndex = (page - 1) * pageSize;
 
     const paginatedQuotations = filteredQuotations.slice(
       startIndex,
       startIndex + pageSize
-    );
+    ).map((q: any) => ({
+      ...q,
+      components: q.components.map((c: any) => ({
+        ...c,
+        moq: c.moq || 0,
+        nq: c.nq || 0
+      }))
+    }));
 
-    console.log("Paginated quotations:", JSON.stringify(paginatedQuotations, null, 2)); // 添加这行
+    console.log("Paginated quotations:", JSON.stringify(paginatedQuotations, null, 2));
 
     return {
       quotations: paginatedQuotations,
-      //totalPages: Math.ceil(filteredQuotations.length / pageSize)
       totalPages: Math.ceil(data.length / pageSize),
     };
   } catch (error) {
@@ -322,22 +328,59 @@ export default function QuotationManagement() {
     try {
       const response = await fetch(`/api/quotations/${quotationId}/query`);
       if (!response.ok) {
-        throw new Error("查询报价失败");
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      console.log("查询结果:", data);
-      await fetchData();
+      const rawData = await response.text();
+      console.log("Raw response:", rawData);
 
-      // 显示查询结果给用户
+      let data;
+      try {
+        data = JSON.parse(rawData);
+      } catch (error) {
+        console.error("Error parsing JSON:", error);
+        throw new Error("Invalid JSON response");
+      }
+
+      console.log("Parsed data:", JSON.stringify(data, null, 2));
+
+      // 检查 data 是否包含预期的结构
+      if (!data || !data.quotation || !data.tiResponse) {
+        console.error("Unexpected response structure:", data);
+        throw new Error("Unexpected response structure");
+      }
+
+      const { quotation, tiResponse } = data;
+
+      console.log('Received quotation:', JSON.stringify(quotation, null, 2));
+
+      // 更新本地状态
+      setQuotations(prevQuotations => 
+        prevQuotations.map(q => 
+          q.id === quotationId ? {
+            ...q,
+            ...quotation,
+            components: quotation.components.map((comp: any) => ({
+              ...comp,
+              moq: comp.moq,
+              nq: comp.nq
+            }))
+          } : q
+        )
+      );
+
+      console.log('Updated quotations:', JSON.stringify(quotations, null, 2));
+
+      // 显示成功消息
       toast({
         title: "查询成功",
-        description: "报价信息已成功获取，请查看控制台输出。",
+        description: "报价信息已成功获取并更新。",
       });
+
     } catch (error) {
       console.error("查询报价时出错:", error);
       toast({
         title: "查询失败",
-        description: "查询报价时发生错误，请稍后重试。",
+        description: error instanceof Error ? error.message : "查询报价时发生未知错误，请稍后重试。",
         variant: "destructive",
       });
     }

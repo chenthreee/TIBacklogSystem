@@ -31,39 +31,28 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
-  await dbConnect()
-
+export async function POST(request: Request) {
   try {
-    const orderData = await req.json()
-    console.log('原始 orderData:', orderData);
-
-    // 处理组件,将 tiPrice 作为 unitPrice
-    const processedComponents = orderData.components.map((component: any) => ({
+    await dbConnect();
+    const data = await request.json();
+    
+    // 确保 components 包含 moq 和 nq
+    const components = data.components.map((component: any) => ({
       ...component,
-      unitPrice: component.tiPrice || component.unitPrice, // 优先使用 tiPrice,如果不存在则使用 unitPrice
+      moq: component.moq || 0,
+      nq: component.nq || 0,
     }));
 
-    // 重新计算总金额
-    const totalAmount = processedComponents.reduce((sum: number, comp: any) => {
-      return sum + (comp.quantity * comp.unitPrice);
-    }, 0);
-
     const newOrder = new Order({
-      ...orderData,
-      components: processedComponents,
-      totalAmount: totalAmount,
-      orderNumber: orderData.purchaseOrderNumber, // 使用采购订单号作为订单号
-    })
+      ...data,
+      components,
+    });
 
-    console.log('处理后的 newOrder:', newOrder);
-
-    const savedOrder = await newOrder.save()
-
-    return NextResponse.json({ success: true, order: savedOrder }, { status: 201 })
+    const savedOrder = await newOrder.save();
+    return NextResponse.json(savedOrder, { status: 201 });
   } catch (error) {
-    console.error('创建订单时出错:', error)
-    return NextResponse.json({ success: false, error: '创建订单失败' }, { status: 500 })
+    console.error('Error in POST /api/orders:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 

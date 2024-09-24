@@ -25,7 +25,9 @@ const ComponentSchema = new mongoose.Schema({
   k3Code: String,
   type: String,
   description: String,
-  confirmations: [ConfirmationSchema] // 新增字段
+  confirmations: [ConfirmationSchema], // 新增字段
+  moq: { type: Number, default: 0 },
+  nq: { type: Number, default: 0 }
 });
 
 const OrderSchema = new mongoose.Schema({

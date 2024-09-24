@@ -8,6 +8,8 @@ const ComponentSchema = new mongoose.Schema({
   tiPrice: {type: Number, default: 0},
   status: {type: String, default: 'Pending'}, // 新增状态字段
   deliveryDate: {type: String, default: ''}, // 新增交期字段
+  moq: { type: Number, default: 0 }, // 添加 MOQ 字段
+  nq: { type: Number, default: 0 }, // 添加 NQ 字段
 });
 
 const QuotationSchema = new mongoose.Schema({
@@ -21,6 +23,8 @@ const QuotationSchema = new mongoose.Schema({
     default: function(this: any) { return this._id.toString(); }
   }, // 新增客户报价编号字段
   components: [ComponentSchema],
+  quoteStartDate: { type: String, default: '' },
+  quoteEndDate: { type: String, default: '' },
 });
 
 export default mongoose.models.Quotation || mongoose.model('Quotation', QuotationSchema);

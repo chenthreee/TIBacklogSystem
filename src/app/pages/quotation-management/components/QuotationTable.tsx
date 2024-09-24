@@ -108,6 +108,8 @@ function QuotationTable({
                         <TableRow>
                           <TableHead>元件名称</TableHead>
                           <TableHead>年用量</TableHead>
+                          <TableHead>MOQ</TableHead>
+                          <TableHead>NQ</TableHead>
                           <TableHead>报价</TableHead>
                           <TableHead>TI返回价格</TableHead>
                           <TableHead>小计</TableHead>
@@ -120,8 +122,10 @@ function QuotationTable({
                           <TableRow key={component.id}>
                             <TableCell>{component.name}</TableCell>
                             <TableCell>{component.quantity}</TableCell>
+                            <TableCell>{component.moq ?? 'N/A'}</TableCell>
+                            <TableCell>{component.nq ?? 'N/A'}</TableCell>
                             <TableCell>${component.unitPrice.toFixed(2)}</TableCell>
-                            <TableCell>${component.tiPrice}</TableCell>
+                            <TableCell>${component.tiPrice.toFixed(2)}</TableCell>
                             <TableCell>${(component.quantity * component.unitPrice).toFixed(2)}</TableCell>
                             <TableCell>{component.status}</TableCell>
                             <TableCell>
