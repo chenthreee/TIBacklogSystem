@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Order from '@/models/Order'
+import Quotation from '@/models/Quotation' // 引入 Quotation 模型
 
 export async function GET(req: NextRequest) {
   await dbConnect()
@@ -36,12 +37,29 @@ export async function POST(request: Request) {
     await dbConnect();
     const data = await request.json();
     
-    // 确保 components 包含 moq 和 nq
-    const components = data.components.map((component: any) => ({
-      ...component,
-      moq: component.moq || 0,
-      nq: component.nq || 0,
-    }));
+    // 获取报价ID
+    const { quotationId, components: orderComponents } = data;
+
+    // 查找对应的报价单
+    const quotation = await Quotation.findById(quotationId);
+
+    if (!quotation) {
+      return NextResponse.json({ error: '未找到对应的报价单' }, { status: 404 });
+    }
+
+    // 从报价单中获取组件信息
+    const components = orderComponents.map((orderComponent: any) => {
+      const quoteComponent = quotation.components.find((qc: any) => qc.id === orderComponent.id);
+      if (quoteComponent) {
+        return {
+          ...orderComponent,
+          unitPrice: quoteComponent.unitPrice,
+          moq: quoteComponent.moq,
+          nq: quoteComponent.nq,
+        };
+      }
+      return orderComponent;
+    });
 
     const newOrder = new Order({
       ...data,
