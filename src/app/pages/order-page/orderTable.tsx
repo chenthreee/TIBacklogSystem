@@ -8,7 +8,7 @@ import {
   TableCell
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Edit, Trash2, ChevronUp, ChevronDown, Pencil, Search } from "lucide-react";
+import { CheckCircle, Edit, Trash2, ChevronUp, ChevronDown, Pencil, Search, AlertCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -86,6 +86,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [componentToDelete, setComponentToDelete] = useState<{ orderId: string, componentId: string } | null>(null);
+  const [quantityCheckResults, setQuantityCheckResults] = useState<{ [key: string]: { [key: string]: boolean } }>({});
 
   const openDeleteDialog = (orderId: string, componentId: string) => {
     setComponentToDelete({ orderId, componentId });
@@ -109,6 +110,31 @@ const OrderTable: React.FC<OrderTableProps> = ({
       const unitPrice = displayComponent.unitPrice || 0;
       return isDeleted ? sum : sum + (quantity * unitPrice);
     }, 0).toFixed(3); // 保留三位小数
+  };
+
+  const checkQuantities = (order: Order) => {
+    const results: { [key: string]: boolean } = {};
+    order.components.forEach((component) => {
+      const localEdit = localEditedComponents[`${order._id}-${component.id}`];
+      const displayComponent = localEdit || component;
+      
+      const quantity = displayComponent.quantity;
+      const moq = displayComponent.moq;
+      const nq = displayComponent.nq;
+      
+      if (moq === undefined || nq === undefined) {
+        results[component.id] = false;
+        return;
+      }
+
+      if (quantity < moq) {
+        results[component.id] = false;
+      } else {
+        const remainder = (quantity - moq) % nq;
+        results[component.id] = remainder === 0;
+      }
+    });
+    setQuantityCheckResults({ ...quantityCheckResults, [order._id]: results });
   };
 
   return (
@@ -182,6 +208,14 @@ const OrderTable: React.FC<OrderTableProps> = ({
                         <ChevronDown className="h-4 w-4" />
                       )}
                       {expandedOrders.includes(order._id) ? "收起" : "展开"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => checkQuantities(order)}
+                    >
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      检查数量
                     </Button>
                   </div>
                 </TableCell>
@@ -263,6 +297,14 @@ const OrderTable: React.FC<OrderTableProps> = ({
                                   </Button>
                                  
                                 </div>
+                              </TableCell>
+                              <TableCell>
+                                {quantityCheckResults[order._id]?.[component.id] === false && (
+                                  <span className="text-red-500">数量不符合规则</span>
+                                )}
+                                {quantityCheckResults[order._id]?.[component.id] === true && (
+                                  <span className="text-green-500">数量符合规则</span>
+                                )}
                               </TableCell>
                             </TableRow>
                           );

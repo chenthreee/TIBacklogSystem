@@ -49,6 +49,8 @@ interface Component {
   description: string
   confirmations?: Confirmation[];
   isDeleted?: boolean; // Added this line
+  moq: number;
+  nq: number;
 }
 
 interface Confirmation {
@@ -504,7 +506,7 @@ export default function OrderManagement() {
       ) : (
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <OrderTable
-            orders={orders}
+            orders={orders as any} // 更改了报错
             handleSubmitOrder={handleSubmitOrder}
             handleModifyOrder={handleModifyOrder}
             handleDeleteOrder={handleDeleteOrder}
@@ -512,8 +514,8 @@ export default function OrderManagement() {
             toggleExpand={toggleExpand}
             expandedOrders={expandedOrders}
             handleEditComponent={handleEditComponent}
-            localEditedComponents={localEditedComponents}
-            handleDeleteComponent={handleDeleteComponent}
+            localEditedComponents={localEditedComponents as any} //更改了报错
+            handleDeleteComponent={handleDeleteComponent} 
           />
         </div>
       )}
