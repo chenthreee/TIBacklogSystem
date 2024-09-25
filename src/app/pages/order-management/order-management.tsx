@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import React, { useState } from 'react';
+import LoginForm from '../../components/login-form';
+import { login } from '../../api/auth/route';
+import User from '../../../models/User';
 import { Menu, Search, FileText, Package, Truck, DollarSign, ChevronDown, CreditCard } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,9 +19,30 @@ import Logistics from '../logistics-page/logistics'
 import InvoicePage from '../invoice-page/invoice'
 import RemittanceNotification from '../remittanceNotification-page/remittanceNotification'
 
-export default function OrderManagementSystem() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState('quotation')
+interface User {
+  username: string;
+  password: string;
+}
+const OrderManagement: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('quotation');
+
+  const handleLogin = async (username: string, password: string) => {
+    try {
+      const loggedInUser = await login(username, password);
+      if (loggedInUser) {
+        setIsLoggedIn(true);
+        setUser(loggedInUser);
+      } else {
+        alert('用户名或密码错误');
+      }
+    } catch (error) {
+      console.error('登录失败:', error);
+      alert('登录失败,请稍后再试');
+    }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -35,6 +59,14 @@ export default function OrderManagementSystem() {
       default:
         return <div>请选择一个选项</div>
     }
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <LoginForm onLogin={handleLogin} />
+      </div>
+    );
   }
 
   return (
@@ -136,5 +168,7 @@ export default function OrderManagementSystem() {
         </main>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default OrderManagement;
