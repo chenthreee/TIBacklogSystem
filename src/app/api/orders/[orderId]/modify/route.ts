@@ -121,6 +121,12 @@ export async function POST(
       return comp.status !== 'deleted' ? sum + (comp.quantity * comp.unitPrice) : sum
     }, 0)
 
+    // 添加 API 调用日志
+    order.apiLogs.push({
+      operationType: 'modify',
+      timestamp: new Date()
+    });
+
     await order.save()
 
     return NextResponse.json({ success: true, order, tiResponse: response }, { status: 200 })

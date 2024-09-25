@@ -39,7 +39,22 @@ const OrderSchema = new mongoose.Schema({
   tiOrderNumber: String,
   components: [ComponentSchema],
   quotationId: String,
-  purchaseOrderNumber: String
+  purchaseOrderNumber: String,
+  apiLogs: [{
+    operationType: {
+      type: String,
+      enum: ['submit', 'modify'],
+      required: true
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    // 变更人字段,暂时不处理
+    // user: {
+    //   type: String
+    // }
+  }]
 });
 
 const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);

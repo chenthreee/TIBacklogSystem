@@ -50,6 +50,12 @@ export async function POST(
       }
     })
 
+    // 添加 API 调用日志
+    order.apiLogs.push({
+      operationType: 'submit',
+      timestamp: new Date()
+    });
+
     await order.save()
 
     // 返回完整的响应给客户端

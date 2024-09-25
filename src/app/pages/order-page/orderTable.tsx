@@ -8,7 +8,7 @@ import {
   TableCell
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Edit, Trash2, ChevronUp, ChevronDown, Pencil, Search, AlertCircle } from "lucide-react";
+import { CheckCircle, Edit, Trash2, ChevronUp, ChevronDown, Pencil, Search, AlertCircle, FileText } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +19,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface Order {
   _id: string;
@@ -30,6 +37,10 @@ interface Order {
   components: Component[];
   tiOrderNumber: string;
   purchaseOrderNumber: string;
+  apiLogs: {
+    operationType: 'submit' | 'modify';
+    timestamp: string;
+  }[];
 }
 
 interface Confirmation {
@@ -87,6 +98,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [componentToDelete, setComponentToDelete] = useState<{ orderId: string, componentId: string } | null>(null);
   const [quantityCheckResults, setQuantityCheckResults] = useState<{ [key: string]: { [key: string]: boolean } }>({});
+  const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
+  const [currentLogs, setCurrentLogs] = useState<{operationType: string, timestamp: string}[]>([]);
 
   const openDeleteDialog = (orderId: string, componentId: string) => {
     setComponentToDelete({ orderId, componentId });
@@ -137,6 +150,23 @@ const OrderTable: React.FC<OrderTableProps> = ({
     setQuantityCheckResults({ ...quantityCheckResults, [order._id]: results });
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('zh-CN', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
+  const handleOpenLogDialog = (logs: {operationType: string, timestamp: string}[]) => {
+    setCurrentLogs(logs);
+    setIsLogDialogOpen(true);
+  };
+
   return (
     <>
       <Table>
@@ -148,7 +178,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
             <TableHead>客户</TableHead>
             <TableHead>总金额</TableHead>
             <TableHead>状态</TableHead>
-            <TableHead>操作</TableHead>
+            <TableHead className="text-center">操作</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -162,7 +192,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                 <TableCell>${calculateActualTotal(order)}</TableCell>
                 <TableCell>{order.status}</TableCell>
                 <TableCell>
-                  <div className="flex space-x-2">
+                  <div className="flex justify-center space-x-2">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -179,16 +209,6 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       <Edit className="h-4 w-4 mr-1" />
                       变更提交
                     </Button>
-                    {/* 删除按钮已被注释掉
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteOrder(order._id)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      删除
-                    </Button>
-                    */}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -217,19 +237,28 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       <AlertCircle className="h-4 w-4 mr-1" />
                       检查数量
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleOpenLogDialog(order.apiLogs)}
+                      disabled={!order.apiLogs || order.apiLogs.length === 0}
+                    >
+                      <FileText className="h-4 w-4 mr-1" />
+                      查看日志
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
               {expandedOrders.includes(order._id) && (
                 <TableRow>
-                  <TableCell colSpan={7}>
+                  <TableCell colSpan={8}>
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>元件名称</TableHead>
                           <TableHead>数量</TableHead>
-                          <TableHead>MOQ</TableHead> {/* 新增 MOQ 列 */}
-                          <TableHead>NQ</TableHead> {/* 新增 NQ 列 */}
+                          <TableHead>MOQ</TableHead>
+                          <TableHead>NQ</TableHead>
                           <TableHead>单价</TableHead>
                           <TableHead>小计</TableHead>
                           <TableHead>状态</TableHead>
@@ -250,8 +279,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
                             <TableRow key={component.id} className={isDeleted ? 'opacity-50' : ''}>
                               <TableCell>{displayComponent.name}</TableCell>
                               <TableCell>{quantity}</TableCell>
-                              <TableCell>{displayComponent.moq}</TableCell> {/* 显示 MOQ */}
-                              <TableCell>{displayComponent.nq}</TableCell> {/* 显示 NQ */}
+                              <TableCell>{displayComponent.moq}</TableCell>
+                              <TableCell>{displayComponent.nq}</TableCell>
                               <TableCell>${unitPrice.toFixed(3)}</TableCell>
                               <TableCell>${componentTotal}</TableCell>
                               <TableCell>{isDeleted ? '已删除' : displayComponent.status}</TableCell>
@@ -285,7 +314,6 @@ const OrderTable: React.FC<OrderTableProps> = ({
                                     <Pencil className="h-4 w-4" />
                                     编辑
                                   </Button>
-                                  
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -295,16 +323,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                                     <Trash2 className="h-4 w-4" />
                                     删除
                                   </Button>
-                                 
                                 </div>
-                              </TableCell>
-                              <TableCell>
-                                {quantityCheckResults[order._id]?.[component.id] === false && (
-                                  <span className="text-red-500">数量不符合规则</span>
-                                )}
-                                {quantityCheckResults[order._id]?.[component.id] === true && (
-                                  <span className="text-green-500">数量符合规则</span>
-                                )}
                               </TableCell>
                             </TableRow>
                           );
@@ -318,6 +337,37 @@ const OrderTable: React.FC<OrderTableProps> = ({
           ))}
         </TableBody>
       </Table>
+
+      <Dialog open={isLogDialogOpen} onOpenChange={setIsLogDialogOpen}>
+        <DialogContent className="sm:max-w-[700px] bg-white">
+          <DialogHeader>
+            <DialogTitle>操作日志</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 max-h-[60vh] overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-1/4">操作类型</TableHead>
+                  <TableHead className="w-1/2">时间</TableHead>
+                  <TableHead className="w-1/4">变更人</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentLogs.map((log, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{log.operationType === 'submit' ? '提交' : '修改'}</TableCell>
+                    <TableCell>{formatDate(log.timestamp)}</TableCell>
+                    <TableCell>-</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsLogDialogOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="bg-white shadow-lg rounded-xl p-6">

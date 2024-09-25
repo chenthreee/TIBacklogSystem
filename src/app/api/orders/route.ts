@@ -37,35 +37,22 @@ export async function POST(request: Request) {
     await dbConnect();
     const data = await request.json();
     
-    // 获取报价ID
+    // 获取报价ID和组件
     const { quotationId, components: orderComponents } = data;
 
-    // 查找对应的报价单
-    const quotation = await Quotation.findById(quotationId);
+    // 使用传入的 tiPrice 作为 unitPrice
+    const updatedComponents = orderComponents.map((component: any) => ({
+      ...component,
+      unitPrice: component.tiPrice // 使用传入的 tiPrice 作为 unitPrice
+    }));
 
-    if (!quotation) {
-      return NextResponse.json({ error: '未找到对应的报价单' }, { status: 404 });
-    }
-
-    // 从报价单中获取组件信息
-    const components = orderComponents.map((orderComponent: any) => {
-      const quoteComponent = quotation.components.find((qc: any) => qc.id === orderComponent.id);
-      if (quoteComponent) {
-        return {
-          ...orderComponent,
-          unitPrice: quoteComponent.tiPrice,
-          moq: quoteComponent.moq,
-          nq: quoteComponent.nq,
-        };
-      }
-      return orderComponent;
-    });
+    console.error('更新后components:', JSON.stringify(updatedComponents, null, 2));
 
     // 创建新订单
     const newOrder = new Order({
       ...data,
-      orderNumber: data.purchaseOrderNumber, // 将 purchaseOrderNumber 赋值给 orderNumber
-      components,
+      orderNumber: data.purchaseOrderNumber,
+      components: updatedComponents, // 使用更新后的组件
     });
 
     // 保存订单
