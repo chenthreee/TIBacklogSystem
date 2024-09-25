@@ -1,28 +1,38 @@
+import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/mongodb';
+
 import User from '../../../models/User';
 
-// 定义 User 接口
-interface User {
-  username: string;
-  password: string;
-}
+export async function POST(request: Request) {
+  try {
+    const { username, password } = await request.json();
 
-// 模拟用户数据库
-const users: User[] = [
-  { username: 'admin', password: 'admin123' },
-  { username: 'user', password: 'user123' },
-];
+    // 连接到数据库
+    await dbConnect();
 
-export async function login(username: string, password: string): Promise<User | null> {
-  // 模拟API调用延迟
-  await new Promise(resolve => setTimeout(resolve, 500));
+    // 在数据库中查找用户
+    const user = await User.findOne({ username });
 
-  const user = users.find(u => u.username === username && u.password === password);
-  
-  if (user) {
+    if (!user) {
+      return NextResponse.json({ error: '用户不存在' }, { status: 401 });
+    }
+
+    // 比较密码
+    const isMatch = user.password === password;
+
+    if (!isMatch) {
+      return NextResponse.json({ error: '密码错误' }, { status: 401 });
+    }
+
     // 返回用户信息,但不包括密码
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword as User;
-  }
+    const userWithoutPassword = {
+      _id: user._id,
+      username: user.username
+    };
 
-  return null;
+    return NextResponse.json(userWithoutPassword);
+  } catch (error) {
+    console.error('登录错误:', error);
+    return NextResponse.json({ error: '登录失败' }, { status: 500 });
+  }
 }

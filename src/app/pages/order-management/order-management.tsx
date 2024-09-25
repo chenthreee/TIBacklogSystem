@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import LoginForm from '../../components/login-form';
-import { login } from '../../api/auth/route';
+// 移除这行: import { login } from '../../api/auth/route';
 import User from '../../../models/User';
 import { Menu, Search, FileText, Package, Truck, DollarSign, ChevronDown, CreditCard } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -31,12 +31,23 @@ const OrderManagement: React.FC = () => {
 
   const handleLogin = async (username: string, password: string) => {
     try {
-      const loggedInUser = await login(username, password);
-      if (loggedInUser) {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (response.ok) {
+        const loggedInUser = await response.json();
         setIsLoggedIn(true);
         setUser(loggedInUser);
+        // 可以选择将用户信息存储在 localStorage 中
+        localStorage.setItem('user', JSON.stringify(loggedInUser));
       } else {
-        alert('用户名或密码错误');
+        const errorData = await response.json();
+        alert(errorData.error || '用户名或密码错误');
       }
     } catch (error) {
       console.error('登录失败:', error);
