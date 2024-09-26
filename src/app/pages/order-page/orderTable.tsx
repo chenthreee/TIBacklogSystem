@@ -98,6 +98,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [componentToDelete, setComponentToDelete] = useState<{ orderId: string, componentId: string } | null>(null);
   const [quantityCheckResults, setQuantityCheckResults] = useState<{ [key: string]: { [key: string]: boolean } }>({});
+  const [isCheckingQuantities, setIsCheckingQuantities] = useState(false);
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
   const [currentLogs, setCurrentLogs] = useState<{operationType: string, timestamp: string}[]>([]);
 
@@ -126,6 +127,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
   };
 
   const checkQuantities = (order: Order) => {
+    setIsCheckingQuantities(true);
     const results: { [key: string]: boolean } = {};
     order.components.forEach((component) => {
       const localEdit = localEditedComponents[`${order._id}-${component.id}`];
@@ -148,6 +150,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
       }
     });
     setQuantityCheckResults({ ...quantityCheckResults, [order._id]: results });
+    setIsCheckingQuantities(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -233,9 +236,14 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => checkQuantities(order)}
+                      disabled={isCheckingQuantities}
                     >
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      检查数量
+                      {isCheckingQuantities ? (
+                        <span className="animate-spin mr-1">⌛</span>
+                      ) : (
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                      )}
+                      {isCheckingQuantities ? "检查中..." : "检查数量"}
                     </Button>
                     <Button
                       variant="ghost"
@@ -278,7 +286,14 @@ const OrderTable: React.FC<OrderTableProps> = ({
                           return (
                             <TableRow key={component.id} className={isDeleted ? 'opacity-50' : ''}>
                               <TableCell>{displayComponent.name}</TableCell>
-                              <TableCell>{quantity}</TableCell>
+                              <TableCell>
+                                {quantityCheckResults[order._id]?.[component.id] !== undefined && (
+                                  <span className={quantityCheckResults[order._id][component.id] ? "text-green-500" : "text-red-500"}>
+                                    {quantityCheckResults[order._id][component.id] ? "✓" : "✗"}
+                                  </span>
+                                )}
+                                {displayComponent.quantity}
+                              </TableCell>
                               <TableCell>{displayComponent.moq}</TableCell>
                               <TableCell>{displayComponent.nq}</TableCell>
                               <TableCell>${unitPrice.toFixed(3)}</TableCell>
