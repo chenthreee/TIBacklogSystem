@@ -8,7 +8,8 @@ import {
   TableCell
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Edit, Trash2, ChevronUp, ChevronDown, Pencil, Search, AlertCircle, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { CheckCircle, Edit, Trash2, ChevronUp, ChevronDown, Pencil, Search, AlertCircle, FileText, Check, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,6 +82,7 @@ interface OrderTableProps {
   handleEditComponent: (orderId: string, component: Component) => void;
   localEditedComponents: {[key: string]: Component}
   handleDeleteComponent: (orderId: string, componentId: string) => void;
+  handleUpdatePurchaseOrderNumber: (orderId: string, newPurchaseOrderNumber: string) => Promise<void>;
 }
 
 const OrderTable: React.FC<OrderTableProps> = ({
@@ -93,7 +95,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
   expandedOrders,
   handleEditComponent,
   localEditedComponents,
-  handleDeleteComponent
+  handleDeleteComponent,
+  handleUpdatePurchaseOrderNumber
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [componentToDelete, setComponentToDelete] = useState<{ orderId: string, componentId: string } | null>(null);
@@ -101,6 +104,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
   const [isCheckingQuantities, setIsCheckingQuantities] = useState(false);
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
   const [currentLogs, setCurrentLogs] = useState<{operationType: string, timestamp: string}[]>([]);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editingPurchaseOrderNumber, setEditingPurchaseOrderNumber] = useState<string>('');
 
   const openDeleteDialog = (orderId: string, componentId: string) => {
     setComponentToDelete({ orderId, componentId });
@@ -170,12 +175,24 @@ const OrderTable: React.FC<OrderTableProps> = ({
     setIsLogDialogOpen(true);
   };
 
+  const handleEditPurchaseOrderNumber = (orderId: string, currentPurchaseOrderNumber: string) => {
+    setEditingOrderId(orderId);
+    setEditingPurchaseOrderNumber(currentPurchaseOrderNumber);
+  };
+
+  const handleSavePurchaseOrderNumber = async () => {
+    if (editingOrderId) {
+      await handleUpdatePurchaseOrderNumber(editingOrderId, editingPurchaseOrderNumber);
+      setEditingOrderId(null);
+    }
+  };
+
   return (
     <>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>订单ID</TableHead>
+            <TableHead>PO号</TableHead>
             <TableHead>TI订单号</TableHead>
             <TableHead>日期</TableHead>
             <TableHead>客户</TableHead>
@@ -188,7 +205,30 @@ const OrderTable: React.FC<OrderTableProps> = ({
           {orders.map((order) => (
             <React.Fragment key={order._id}>
               <TableRow>
-                <TableCell>{order.purchaseOrderNumber}</TableCell>
+                <TableCell>
+                  {editingOrderId === order._id ? (
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        value={editingPurchaseOrderNumber}
+                        onChange={(e) => setEditingPurchaseOrderNumber(e.target.value)}
+                        className="w-40"
+                      />
+                      <Button size="sm" onClick={handleSavePurchaseOrderNumber}>
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingOrderId(null)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <span 
+                      className="cursor-pointer hover:underline"
+                      onClick={() => !order.tiOrderNumber && handleEditPurchaseOrderNumber(order._id, order.purchaseOrderNumber)}
+                    >
+                      {order.purchaseOrderNumber}
+                    </span>
+                  )}
+                </TableCell>
                 <TableCell>{order.tiOrderNumber || '未提交'}</TableCell>
                 <TableCell>{order.date}</TableCell>
                 <TableCell>{order.customer}</TableCell>

@@ -479,6 +479,41 @@ export default function OrderManagement() {
     });
   };
 
+  const handleUpdatePurchaseOrderNumber = async (orderId: string, newPurchaseOrderNumber: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}/update-purchase-order-number`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ purchaseOrderNumber: newPurchaseOrderNumber }),
+      });
+
+      if (!response.ok) {
+        throw new Error('更新采购订单号失败');
+      }
+
+      const updatedOrder = await response.json();
+
+      // 更新本地订单状态
+      setOrders(orders.map(order => 
+        order._id === orderId ? { ...order, purchaseOrderNumber: updatedOrder.purchaseOrderNumber, orderNumber: updatedOrder.orderNumber } : order
+      ));
+
+      toast({
+        title: "采购订单号已更新",
+        description: `订单 ${orderId} 的采购订单号已成功更新。`,
+      });
+    } catch (error) {
+      console.error('更新采购订单号时出错:', error);
+      toast({
+        title: "错误",
+        description: "更新采购订单号失败，请稍后重试。",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -518,6 +553,7 @@ export default function OrderManagement() {
             handleEditComponent={handleEditComponent}
             localEditedComponents={localEditedComponents as any} //更改了报错
             handleDeleteComponent={handleDeleteComponent} 
+            handleUpdatePurchaseOrderNumber={handleUpdatePurchaseOrderNumber}
           />
         </div>
       )}
