@@ -70,6 +70,7 @@ export default function OrderManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [editingComponent, setEditingComponent] = useState<any>(null)
+  const [tiPrice, setTiPrice] = useState<number | null>(null)
   const [isCreateOrderDialogOpen, setIsCreateOrderDialogOpen] = useState(false)
   const [newOrder, setNewOrder] = useState<Partial<Order>>({
     date: new Date().toISOString().split('T')[0],
@@ -126,6 +127,7 @@ export default function OrderManagement() {
 
   const handleEditComponent = (orderId: string, component: Component) => {
     setEditingComponent({ ...component, orderId })
+    fetchTiPrice(component.quoteNumber, component.name)
   }
 
   const handleDeleteOrder = async (orderId: string) => {
@@ -160,16 +162,19 @@ export default function OrderManagement() {
   }
 
   const handleSaveComponent = async (editedComponent: any) => {
-    // 只在本地状态中保存修改，不发送到服务器
     setLocalEditedComponents(prev => ({
       ...prev,
-      [`${editedComponent.orderId}-${editedComponent.id}`]: editedComponent
-    }))
-    setEditingComponent(null)
+      [`${editedComponent.orderId}-${editedComponent.id}`]: {
+        ...editedComponent,
+        unitPrice: tiPrice || editedComponent.unitPrice
+      }
+    }));
+    setEditingComponent(null);
+    setTiPrice(null);
     toast({
       title: "组件已临时更新",
       description: "组件信息已在页面上更新。请点击'修改'按钮以提交到TI。",
-    })
+    });
   }
 
   const handleModifyOrder = async (orderId: string) => {
@@ -605,6 +610,27 @@ export default function OrderManagement() {
     }
   };
 
+  const fetchTiPrice = async (quoteNumber: string, componentName: string) => {
+    try {
+      const response = await fetch(`/api/quotations?quoteNumber=${quoteNumber}`);
+      const data = await response.json();
+      if (data.success && data.quotations.length > 0) {
+        const quotation = data.quotations[0];
+        const matchedComponent = quotation.components.find((c: any) => c.name === componentName);
+        if (matchedComponent) {
+          setTiPrice(matchedComponent.tiPrice);
+        } else {
+          setTiPrice(null);
+        }
+      } else {
+        setTiPrice(null);
+      }
+    } catch (error) {
+      console.error('获取 tiPrice 失败:', error);
+      setTiPrice(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -707,8 +733,23 @@ export default function OrderManagement() {
                 <Input
                   id="edit-quoteNumber"
                   type="text"
-                  value={editingComponent.quoteNumber || ''}
-                  onChange={(e) => setEditingComponent({...editingComponent, quoteNumber: e.target.value})}
+                  value={editingComponent.quoteNumber}
+                  onChange={(e) => {
+                    setEditingComponent({...editingComponent, quoteNumber: e.target.value});
+                    fetchTiPrice(e.target.value, editingComponent.name);
+                  }}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-tiPrice" className="text-right">
+                  TI价格
+                </Label>
+                <Input
+                  id="edit-tiPrice"
+                  type="number"
+                  value={tiPrice !== null ? tiPrice : ''}
+                  readOnly
                   className="col-span-3"
                 />
               </div>
