@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle, Edit, Trash2, ChevronUp, ChevronDown, Pencil, Search, AlertCircle, FileText, Check, X } from "lucide-react";
+import { CheckCircle, Edit, Trash2, ChevronUp, ChevronDown, Pencil, Search, AlertCircle, FileText, Check, X, Plus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +27,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface Order {
   _id: string;
@@ -84,6 +85,7 @@ interface OrderTableProps {
   localEditedComponents: {[key: string]: Component}
   handleDeleteComponent: (orderId: string, componentId: string) => void;
   handleUpdatePurchaseOrderNumber: (orderId: string, newPurchaseOrderNumber: string) => Promise<void>;
+  handleAddComponent: (orderId: string, newComponent: Partial<Component>) => Promise<void>;
 }
 
 const OrderTable: React.FC<OrderTableProps> = ({
@@ -97,7 +99,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
   handleEditComponent,
   localEditedComponents,
   handleDeleteComponent,
-  handleUpdatePurchaseOrderNumber
+  handleUpdatePurchaseOrderNumber,
+  handleAddComponent
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [componentToDelete, setComponentToDelete] = useState<{ orderId: string, componentId: string } | null>(null);
@@ -107,6 +110,17 @@ const OrderTable: React.FC<OrderTableProps> = ({
   const [currentLogs, setCurrentLogs] = useState<{operationType: string, timestamp: string, username: string}[]>([]);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editingPurchaseOrderNumber, setEditingPurchaseOrderNumber] = useState<string>('');
+  const [isAddComponentDialogOpen, setIsAddComponentDialogOpen] = useState(false);
+  const [addingComponentOrderId, setAddingComponentOrderId] = useState<string | null>(null);
+  const [newComponent, setNewComponent] = useState<Partial<Component>>({
+    name: '',
+    quantity: 0,
+    quoteNumber: '',
+    deliveryDate: '',
+    k3Code: '',
+    type: '',
+    description: '',
+  });
 
   const openDeleteDialog = (orderId: string, componentId: string) => {
     setComponentToDelete({ orderId, componentId });
@@ -185,6 +199,28 @@ const OrderTable: React.FC<OrderTableProps> = ({
     if (editingOrderId) {
       await handleUpdatePurchaseOrderNumber(editingOrderId, editingPurchaseOrderNumber);
       setEditingOrderId(null);
+    }
+  };
+
+  const handleOpenAddComponentDialog = (orderId: string) => {
+    setAddingComponentOrderId(orderId);
+    setIsAddComponentDialogOpen(true);
+  };
+
+  const handleAddComponentSubmit = async () => {
+    if (addingComponentOrderId) {
+      await handleAddComponent(addingComponentOrderId, newComponent);
+      setIsAddComponentDialogOpen(false);
+      setAddingComponentOrderId(null);
+      setNewComponent({
+        name: '',
+        quantity: 0,
+        quoteNumber: '',
+        deliveryDate: '',
+        k3Code: '',
+        type: '',
+        description: '',
+      });
     }
   };
 
@@ -294,6 +330,14 @@ const OrderTable: React.FC<OrderTableProps> = ({
                     >
                       <FileText className="h-4 w-4 mr-1" />
                       查看日志
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleOpenAddComponentDialog(order._id)}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      添加元件
                     </Button>
                   </div>
                 </TableCell>
@@ -439,6 +483,84 @@ const OrderTable: React.FC<OrderTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isAddComponentDialogOpen} onOpenChange={setIsAddComponentDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-white">
+          <DialogHeader>
+            <DialogTitle>添加新元件</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">元件名</Label>
+              <Input
+                id="name"
+                value={newComponent.name}
+                onChange={(e) => setNewComponent({...newComponent, name: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="quantity" className="text-right">数量</Label>
+              <Input
+                id="quantity"
+                type="number"
+                value={newComponent.quantity}
+                onChange={(e) => setNewComponent({...newComponent, quantity: Number(e.target.value)})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="quoteNumber" className="text-right">报价号</Label>
+              <Input
+                id="quoteNumber"
+                value={newComponent.quoteNumber}
+                onChange={(e) => setNewComponent({...newComponent, quoteNumber: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="deliveryDate" className="text-right">期望交货日期</Label>
+              <Input
+                id="deliveryDate"
+                type="date"
+                value={newComponent.deliveryDate}
+                onChange={(e) => setNewComponent({...newComponent, deliveryDate: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="k3Code" className="text-right">K3编码</Label>
+              <Input
+                id="k3Code"
+                value={newComponent.k3Code}
+                onChange={(e) => setNewComponent({...newComponent, k3Code: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="type" className="text-right">类型</Label>
+              <Input
+                id="type"
+                value={newComponent.type}
+                onChange={(e) => setNewComponent({...newComponent, type: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">规格描述</Label>
+              <Input
+                id="description"
+                value={newComponent.description}
+                onChange={(e) => setNewComponent({...newComponent, description: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleAddComponentSubmit}>添加元件</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
