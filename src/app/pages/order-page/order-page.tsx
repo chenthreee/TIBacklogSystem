@@ -326,11 +326,15 @@ export default function OrderManagement() {
               deliveryDate = excelDate; // 如果不是数字，保持原样
             }
 
+            // 解析 Excel 中的数量
+            const excelQuantity = parseInt(excelMatch['数量']);
+
             return {
               ...component,
               k3Code: excelMatch['K3编码'],
               type: excelMatch['类型'],
               description: excelMatch['规格描述'],
+              quantity: isNaN(excelQuantity) ? component.quantity : excelQuantity, // 使用 Excel 中的数量，如果无效则保留原数量
               deliveryDate: deliveryDate,
               quoteNumber: quotation.quoteNumber // 添加报价单号
             };
@@ -344,6 +348,8 @@ export default function OrderManagement() {
         throw new Error('没有找到匹配的组件');
       }
 
+      console.log('Matched components:', matchedComponents); // 添加这行来检查匹配的组件
+
       const orderData = {
         ...newOrder,
         quotationId: quotation.id, // 设置 quotationId
@@ -352,6 +358,8 @@ export default function OrderManagement() {
         totalAmount: matchedComponents.reduce((sum: number, comp: any) => sum + (comp.quantity * comp.tiPrice), 0),
       };
       
+      console.log('Order data to be sent:', orderData); // 添加这行来检查发送的订单数据
+
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
