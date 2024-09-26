@@ -204,7 +204,7 @@ export default function RemittanceTable({
             </div>
             <div className="flex justify-end space-x-2 mt-4">
               <Button variant="outline" onClick={handleCancelEdit}>取消</Button>
-              <Button variant="primary" onClick={handleConfirmEdit}>确认</Button>
+              <Button variant="default" onClick={handleConfirmEdit}>确认</Button>
             </div>
           </div>
         </div>
