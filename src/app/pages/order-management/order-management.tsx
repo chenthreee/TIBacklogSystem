@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LoginForm from '../../components/login-form';
 // 移除这行: import { login } from '../../api/auth/route';
 import User from '../../../models/User';
@@ -29,6 +29,15 @@ const OrderManagement: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('quotation');
 
+  useEffect(() => {
+    // 在组件加载时从 localStorage 获取用户信息
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+      setIsLoggedIn(true);
+    }
+  }, []);
+
   const handleLogin = async (username: string, password: string) => {
     try {
       const response = await fetch('/api/auth', {
@@ -43,7 +52,6 @@ const OrderManagement: React.FC = () => {
         const loggedInUser = await response.json();
         setIsLoggedIn(true);
         setUser(loggedInUser);
-        // 可以选择将用户信息存储在 localStorage 中
         localStorage.setItem('user', JSON.stringify(loggedInUser));
       } else {
         const errorData = await response.json();
@@ -53,6 +61,12 @@ const OrderManagement: React.FC = () => {
       console.error('登录失败:', error);
       alert('登录失败,请稍后再试');
     }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUser(null);
+    localStorage.removeItem('user');
   };
 
   const renderContent = () => {
@@ -137,7 +151,7 @@ const OrderManagement: React.FC = () => {
               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-gray-500 focus:outline-none focus:text-gray-700 md:hidden">
                 <Menu size={24} />
               </button>
-              <h1 className="text-xl font-semibold ml-2">管理系统</h1>
+              <h1 className="text-xl font-semibold ml-2">TI备货系统</h1>
             </div>
             <div className="flex items-center">
               <div className="relative mr-4">
@@ -153,18 +167,15 @@ const OrderManagement: React.FC = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center">
-                    <img
-                      className="h-8 w-8 rounded-full object-cover"
-                      src="/placeholder.svg?height=32&width=32"
-                      alt="User avatar"
-                    />
+
+                    <span className="ml-2 mr-1">{user?.username}</span>
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>我的账户</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
                     登出
                   </DropdownMenuItem>
                 </DropdownMenuContent>

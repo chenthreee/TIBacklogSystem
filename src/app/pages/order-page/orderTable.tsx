@@ -41,6 +41,7 @@ interface Order {
   apiLogs: {
     operationType: 'submit' | 'modify';
     timestamp: string;
+    username: string;
   }[];
 }
 
@@ -103,7 +104,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
   const [quantityCheckResults, setQuantityCheckResults] = useState<{ [key: string]: { [key: string]: boolean } }>({});
   const [isCheckingQuantities, setIsCheckingQuantities] = useState(false);
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
-  const [currentLogs, setCurrentLogs] = useState<{operationType: string, timestamp: string}[]>([]);
+  const [currentLogs, setCurrentLogs] = useState<{operationType: string, timestamp: string, username: string}[]>([]);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editingPurchaseOrderNumber, setEditingPurchaseOrderNumber] = useState<string>('');
 
@@ -170,7 +171,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
     });
   };
 
-  const handleOpenLogDialog = (logs: {operationType: string, timestamp: string}[]) => {
+  const handleOpenLogDialog = (logs: {operationType: string, timestamp: string, username: string}[]) => {
     setCurrentLogs(logs);
     setIsLogDialogOpen(true);
   };
@@ -402,9 +403,9 @@ const OrderTable: React.FC<OrderTableProps> = ({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-1/4">操作类型</TableHead>
-                  <TableHead className="w-1/2">时间</TableHead>
-                  <TableHead className="w-1/4">变更人</TableHead>
+                  <TableHead className="w-1/5">操作类型</TableHead>
+                  <TableHead className="w-2/5">时间</TableHead>
+                  <TableHead className="w-2/5">变更人</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -412,7 +413,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                   <TableRow key={index}>
                     <TableCell>{log.operationType === 'submit' ? '提交' : '修改'}</TableCell>
                     <TableCell>{formatDate(log.timestamp)}</TableCell>
-                    <TableCell>-</TableCell>
+                    <TableCell>{log.username}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

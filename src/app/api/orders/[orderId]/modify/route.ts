@@ -11,7 +11,7 @@ export async function POST(
   await dbConnect()
 
   const { orderId } = params
-  const { components } = await req.json()
+  const { components, username } = await req.json() // 从请求体中获取组件和用户名
 
   try {
     const order = await Order.findById(orderId)
@@ -121,10 +121,11 @@ export async function POST(
       return comp.status !== 'deleted' ? sum + (comp.quantity * comp.unitPrice) : sum
     }, 0)
 
-    // 添加 API 调用日志
+    // 添加 API 调用日志，包含用户名
     order.apiLogs.push({
       operationType: 'modify',
-      timestamp: new Date()
+      timestamp: new Date(),
+      username: username // 添加用户名
     });
 
     await order.save()

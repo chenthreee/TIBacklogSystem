@@ -174,6 +174,7 @@ export default function OrderManagement() {
 
   const handleModifyOrder = async (orderId: string) => {
     try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       console.log("开始执行修改订单");
       const orderToModify = orders.find(o => o._id === orderId)
       if (!orderToModify) {
@@ -223,7 +224,10 @@ export default function OrderManagement() {
         });
       }
 
-      const requestBody = { components: componentsToSend };
+      const requestBody = { 
+        components: componentsToSend,
+        username: user.username
+      };
       console.log("发送到服务器的请求体:", JSON.stringify(requestBody, null, 2));
 
       // 发送修改请求
@@ -390,8 +394,13 @@ export default function OrderManagement() {
 
   const handleSubmitOrder = async (orderId: string) => {
     try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       const response = await fetch(`/api/orders/${orderId}/submit`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: user.username }),
       });
 
       if (!response.ok) {
@@ -414,6 +423,7 @@ export default function OrderManagement() {
         } : o
       );
       setOrders(updatedOrders);
+      await fetchData();
 
       toast({
         title: "订单已提交",
