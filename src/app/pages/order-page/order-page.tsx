@@ -260,6 +260,8 @@ export default function OrderManagement() {
         })
         return newState
       })
+      
+      await fetchData(); // 重新获取订单列表
 
       toast({
         title: "订单已修改",
