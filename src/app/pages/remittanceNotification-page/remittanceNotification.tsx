@@ -147,6 +147,60 @@ export default function RemittanceNotification() {
     }
   }
 
+  const handleDeleteItem = async (remittanceId: string, itemIndex: number) => {
+    try {
+      const response = await fetch(`/api/remittance-notifications/${remittanceId}/items/${itemIndex}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete item');
+      }
+      const updatedRemittance = await response.json();
+      setRemittances(remittances.map(remittance => remittance.id === remittanceId ? updatedRemittance : remittance));
+      toast({
+        title: "发票已删除",
+        description: "选定的发票已成功从汇款通知中移除。",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast({
+        title: "删除失败",
+        description: "删除发票时发生错误，请稍后重试。",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateItem = async (remittanceId: string, itemIndex: number, updatedItem: RemittanceItem) => {
+    try {
+      const response = await fetch(`/api/remittance-notifications/${remittanceId}/items/${itemIndex}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedItem),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update item');
+      }
+      const updatedRemittance = await response.json();
+      setRemittances(remittances.map(remittance => remittance.id === remittanceId ? updatedRemittance : remittance));
+      toast({
+        title: "发票已更新",
+        description: "选定的发票已成功更新。",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error updating item:', error);
+      toast({
+        title: "更新失败",
+        description: "更新发票时发生错误，请稍后重试。",
+        variant: "destructive",
+      });
+    }
+  };
+
   const toggleRowExpansion = (id: string) => {
     setExpandedRows(prevExpandedRows => {
       const newExpandedRows = new Set(prevExpandedRows);
@@ -188,6 +242,8 @@ export default function RemittanceNotification() {
         toggleRowExpansion={toggleRowExpansion}
         handleSendTI={handleSendTI}
         handleDelete={handleDelete}
+        handleDeleteItem={handleDeleteItem}
+        handleUpdateItem={handleUpdateItem}
       />
     </div>
   )
