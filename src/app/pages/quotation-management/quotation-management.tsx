@@ -179,6 +179,11 @@ export default function QuotationManagement() {
       fetchData();
     } catch (error) {
       console.error("Error updating component:", error);
+      toast({
+        title: '错误',
+        description: `更新元件时出错，错误信息: ${(error as Error).message}`,
+        variant: 'destructive',
+      });
     }
   };
 
@@ -318,6 +323,11 @@ export default function QuotationManagement() {
         data = JSON.parse(rawData);
       } catch (error) {
         console.error("Error parsing JSON:", error);
+        toast({
+          title: '错误',
+          description: `解析JSON文件时出错，错误信息: ${(error as Error).message}`,
+          variant: 'destructive',
+        });
         throw new Error("Invalid JSON response");
       }
 
