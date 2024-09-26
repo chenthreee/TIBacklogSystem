@@ -174,6 +174,7 @@ export default function OrderManagement() {
 
   const handleModifyOrder = async (orderId: string) => {
     try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       console.log("开始执行修改订单");
       const orderToModify = orders.find(o => o._id === orderId)
       if (!orderToModify) {
@@ -223,7 +224,10 @@ export default function OrderManagement() {
         });
       }
 
-      const requestBody = { components: componentsToSend };
+      const requestBody = { 
+        components: componentsToSend,
+        username: user.username
+      };
       console.log("发送到服务器的请求体:", JSON.stringify(requestBody, null, 2));
 
       // 发送修改请求
@@ -260,6 +264,8 @@ export default function OrderManagement() {
         })
         return newState
       })
+      
+      await fetchData(); // 重新获取订单列表
 
       toast({
         title: "订单已修改",
@@ -320,11 +326,15 @@ export default function OrderManagement() {
               deliveryDate = excelDate; // 如果不是数字，保持原样
             }
 
+            // 解析 Excel 中的数量
+            const excelQuantity = parseInt(excelMatch['数量']);
+
             return {
               ...component,
               k3Code: excelMatch['K3编码'],
               type: excelMatch['类型'],
               description: excelMatch['规格描述'],
+              quantity: isNaN(excelQuantity) ? component.quantity : excelQuantity, // 使用 Excel 中的数量，如果无效则保留原数量
               deliveryDate: deliveryDate,
               quoteNumber: quotation.quoteNumber // 添加报价单号
             };
@@ -338,6 +348,8 @@ export default function OrderManagement() {
         throw new Error('没有找到匹配的组件');
       }
 
+      console.log('Matched components:', matchedComponents); // 添加这行来检查匹配的组件
+
       const orderData = {
         ...newOrder,
         quotationId: quotation.id, // 设置 quotationId
@@ -346,6 +358,8 @@ export default function OrderManagement() {
         totalAmount: matchedComponents.reduce((sum: number, comp: any) => sum + (comp.quantity * comp.tiPrice), 0),
       };
       
+      console.log('Order data to be sent:', orderData); // 添加这行来检查发送的订单数据
+
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
@@ -388,8 +402,13 @@ export default function OrderManagement() {
 
   const handleSubmitOrder = async (orderId: string) => {
     try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       const response = await fetch(`/api/orders/${orderId}/submit`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: user.username }),
       });
 
       if (!response.ok) {
@@ -412,6 +431,7 @@ export default function OrderManagement() {
         } : o
       );
       setOrders(updatedOrders);
+      await fetchData();
 
       toast({
         title: "订单已提交",
@@ -477,6 +497,41 @@ export default function OrderManagement() {
     });
   };
 
+  const handleUpdatePurchaseOrderNumber = async (orderId: string, newPurchaseOrderNumber: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}/update-purchase-order-number`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ purchaseOrderNumber: newPurchaseOrderNumber }),
+      });
+
+      if (!response.ok) {
+        throw new Error('更新采购订单号失败');
+      }
+
+      const updatedOrder = await response.json();
+
+      // 更新本地订单状态
+      setOrders(orders.map(order => 
+        order._id === orderId ? { ...order, purchaseOrderNumber: updatedOrder.purchaseOrderNumber, orderNumber: updatedOrder.orderNumber } : order
+      ));
+
+      toast({
+        title: "采购订单号已更新",
+        description: `订单 ${orderId} 的采购订单号已成功更新。`,
+      });
+    } catch (error) {
+      console.error('更新采购订单号时出错:', error);
+      toast({
+        title: "错误",
+        description: "更新采购订单号失败，请稍后重试。",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -516,6 +571,7 @@ export default function OrderManagement() {
             handleEditComponent={handleEditComponent}
             localEditedComponents={localEditedComponents as any} //更改了报错
             handleDeleteComponent={handleDeleteComponent} 
+            handleUpdatePurchaseOrderNumber={handleUpdatePurchaseOrderNumber}
           />
         </div>
       )}

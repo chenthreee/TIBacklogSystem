@@ -10,6 +10,7 @@ export async function POST(
   await dbConnect()
 
   const { orderId } = params
+  const { username } = await req.json() // 从请求体中获取用户名
 
   try {
     const order = await Order.findById(orderId)
@@ -49,11 +50,13 @@ export async function POST(
         component.tiLineItemNumber = lineItem.tiLineItemNumber
       }
     })
-
-    // 添加 API 调用日志
+    // 打印用户名以检查是否正确传入
+    console.log('提交订单的用户名:', username);
+    // 添加 API 调用日志，包含用户名
     order.apiLogs.push({
       operationType: 'submit',
-      timestamp: new Date()
+      timestamp: new Date(),
+      username: username // 添加用户名
     });
 
     await order.save()

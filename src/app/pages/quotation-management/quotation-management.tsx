@@ -397,6 +397,7 @@ export default function QuotationManagement() {
 
       const newQuotation = await response.json();
       setQuotations([...quotations, newQuotation]);
+      await fetchData();
       toast({
         title: "新报价已创建",
         description: "新的报价单已成功添加到列表中。",

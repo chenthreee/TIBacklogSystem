@@ -50,10 +50,9 @@ const OrderSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     },
-    // 变更人字段,暂时不处理
-    // user: {
-    //   type: String
-    // }
+    username: {
+      type: String
+    }
   }]
 });
 
