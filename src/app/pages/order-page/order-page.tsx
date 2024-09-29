@@ -241,7 +241,6 @@ export default function OrderManagement() {
   const handleModifyOrder = async (orderId: string) => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      console.log("开始执行修改订单");
       const orderToModify = orders.find(o => o._id === orderId)
       if (!orderToModify) {
         throw new Error('未找到要修改的订单')
@@ -257,7 +256,6 @@ export default function OrderManagement() {
       }
 
       const queryData = await queryResponse.json();
-      console.log('订单查询响应:', queryData);
 
       // 合并本地编辑和原始组件，并添加修改标记
       const componentsToSend = orderToModify.components.map(comp => {
@@ -294,7 +292,6 @@ export default function OrderManagement() {
         components: componentsToSend,
         username: user.username
       };
-      console.log("发送到服务器的请求体:", JSON.stringify(requestBody, null, 2));
 
       // 发送修改请求
       const response = await fetch(`/api/orders/${orderId}/modify`, {
@@ -338,7 +335,6 @@ export default function OrderManagement() {
         description: `订单 ${orderId} 已成功修改并更新。`,
       })
     } catch (error) {
-      console.error('修改订单时出错:', error)
       toast({
         title: "错误",
         description: "修改订单失败，请稍后重试。",
@@ -414,8 +410,6 @@ export default function OrderManagement() {
           throw new Error('没有找到匹配的组件');
         }
 
-        console.log('Matched components:', matchedComponents); // 添加这行来检查匹配的组件
-
         orderData = {
           ...newOrder,
           quotationId: quotation.id, // 设置 quotationId
@@ -433,8 +427,6 @@ export default function OrderManagement() {
         };
       }
       
-      console.log('Order data to be sent:', orderData); // 添加这行来检查发送的订单数据
-
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
@@ -466,7 +458,6 @@ export default function OrderManagement() {
         description: excelData.length > 0 ? "新订单已成功添加到系统中。" : "空订单已成功创建。",
       });
     } catch (error) {
-      console.error('创建订单时出错:', error);
       toast({
         title: "错误",
         description: `创建订单失败，请稍后重试。错误信息: ${(error as Error).message}`,
@@ -491,7 +482,6 @@ export default function OrderManagement() {
       }
 
       const data = await response.json();
-      console.log('TI API 完整响应:', data.tiResponse);
 
       // 更新本地订单状态
       const updatedOrders = orders.map(o => 
@@ -513,7 +503,6 @@ export default function OrderManagement() {
         description: `订单 ${orderId} 已成功提交到 TI。TI 订单号: ${data.tiResponse.orders[0].orderNumber}`,
       });
     } catch (error) {
-      console.error('提交订单时出错:', error);
       toast({
         title: "错误",
         description: "提交订单失败，请稍后重试。",
@@ -533,7 +522,6 @@ export default function OrderManagement() {
       }
 
       const data = await response.json();
-      console.log('TI 订单查询响应:', data.tiResponse);
 
       // 更新本地订单状态
       const updatedOrders = orders.map(o => 
@@ -552,7 +540,6 @@ export default function OrderManagement() {
 
       // 这里可以添加显示详细订单信息的逻辑，例如打开一个模态框
     } catch (error) {
-      console.error('查询订单时出错:', error);
       toast({
         title: "错误",
         description: "查询订单失败，请稍后重试。",
@@ -598,7 +585,6 @@ export default function OrderManagement() {
         description: `订单 ${orderId} 的采购订单号已成功更新。`,
       });
     } catch (error) {
-      console.error('更新采购订单号时出错:', error);
       toast({
         title: "错误",
         description: "更新采购订单号失败，请稍后重试。",

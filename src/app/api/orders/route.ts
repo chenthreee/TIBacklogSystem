@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     const totalPages = Math.ceil(totalOrders / limit)
 
     const formattedOrders = orders.map(order => ({
-      _id: order._id.toString(),
+      _id: order._id,
       date: order.date,
       customer: order.customer,
       totalAmount: order.totalAmount,
@@ -48,6 +48,7 @@ export async function GET(req: NextRequest) {
       purchaseOrderNumber: order.purchaseOrderNumber,
       components: order.components,
       quoteNumber: order.quoteNumber,
+      apiLogs: order.apiLogs, // 确保包含这个字段
     }))
 
     return NextResponse.json({ orders: formattedOrders, totalPages })
