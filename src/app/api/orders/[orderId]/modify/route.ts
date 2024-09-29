@@ -97,6 +97,8 @@ export async function POST(
             quantity: tiLineItem.schedules[0].requestedQuantity,
             deliveryDate: tiLineItem.schedules[0].requestedDeliveryDate,
             quoteNumber: tiLineItem.quoteNumber,
+            moq: updatedComp.moq, // 添加 MOQ
+            nq: updatedComp.nq,   // 添加 NQ
           }
           // 只有在存在确认信息时才更新
           if (tiLineItem.schedules[0]?.confirmations) {
