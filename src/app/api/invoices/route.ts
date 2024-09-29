@@ -13,7 +13,12 @@ export async function GET(request: Request) {
   const skip = (page - 1) * pageSize;
 
   const query = searchTerm
-    ? { purchaseOrderNumber: { $regex: searchTerm, $options: 'i' } }
+    ? {
+        $or: [
+          { purchaseOrderNumber: { $regex: searchTerm, $options: 'i' } },
+          { customer: { $regex: searchTerm, $options: 'i' } }
+        ]
+      }
     : {};
 
   const totalOrders = await Order.countDocuments(query);

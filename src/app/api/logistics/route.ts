@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
     ? {
         $or: [
           { purchaseOrderNumber: { $regex: searchTerm, $options: 'i' } },
+          { tiOrderNumber: { $regex: searchTerm, $options: 'i' } },
           { customer: { $regex: searchTerm, $options: 'i' } },
         ],
       }

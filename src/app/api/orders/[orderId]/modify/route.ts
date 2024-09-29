@@ -11,7 +11,7 @@ export async function POST(
   await dbConnect()
 
   const { orderId } = params
-  const { components, username } = await req.json() // 从请求体中获取组件和用户名
+  const { components, username, localEdits } = await req.json() // 从请求体中获取组件、用户名和本地编辑信息
 
   try {
     const order = await Order.findById(orderId)
@@ -25,11 +25,42 @@ export async function POST(
     }
 
     const ordersAPI = new TIBacklogOrders(process.env.CLIENT_ID!, process.env.CLIENT_SECRET!, process.env.SERVER_URL!)
-    
-    console.log('传入的components:', JSON.stringify(components, null, 2));
+    console.log('本地编辑信息:')
+    console.log(JSON.stringify(localEdits, null, 2))
 
     const lineItems = []
+    const changeLog = [] // 用于记录变更日志
+
     for (const component of components) {
+      const originalComponent = order.components.find((c: any) => c.id === component.id)
+
+      console.error("component id modified is : ",component.id)
+      const localEdit = localEdits[component.id]
+
+      if (localEdit) {
+        let logEntry = {
+          componentName: component.name,
+          changes: [] as string[]
+        }
+
+        if (localEdit.quantity !== undefined && localEdit.quantity !== originalComponent.quantity) {
+          logEntry.changes.push(`数量从 ${originalComponent.quantity} 变更为 ${localEdit.quantity}`)
+        }
+        if (localEdit.deliveryDate !== undefined && localEdit.deliveryDate !== originalComponent.deliveryDate) {
+          logEntry.changes.push(`交期从 ${originalComponent.deliveryDate} 变更为 ${localEdit.deliveryDate}`)
+        }
+        if (localEdit.quoteNumber !== undefined && localEdit.quoteNumber !== originalComponent.quoteNumber) {
+          logEntry.changes.push(`报价号从 ${originalComponent.quoteNumber} 变更为 ${localEdit.quoteNumber}`)
+        }
+        if (localEdit.isDeleted) {
+          logEntry.changes.push('该物料被标记为删除')
+        }
+
+        if (logEntry.changes.length > 0) {
+          changeLog.push(logEntry)
+        }
+      }
+
       // 处理所有组件，包括不需要修改的
       const quotation = await Quotation.findOne({
         quoteNumber: component.quoteNumber,
@@ -123,11 +154,12 @@ export async function POST(
       return comp.status !== 'deleted' ? sum + (comp.quantity * comp.unitPrice) : sum
     }, 0)
 
-    // 添加 API 调用日志，包含用户名
+    // 添加 API 调用日志，包含用户名和详细的变更记录
     order.apiLogs.push({
       operationType: 'modify',
       timestamp: new Date(),
-      username: username // 添加用户名
+      username: username,
+      changes: changeLog
     });
 
     await order.save()

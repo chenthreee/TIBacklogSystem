@@ -292,7 +292,8 @@ export default function OrderManagement() {
 
       const requestBody = { 
         components: componentsToSend,
-        username: user.username
+        username: user.username,
+        localEdits: localEditedComponents
       };
       console.log("发送到服务器的请求体:", JSON.stringify(requestBody, null, 2));
 
@@ -707,7 +708,7 @@ export default function OrderManagement() {
       <div className="flex justify-between items-center">
         <Input
           type="text"
-          placeholder="搜索PO号..."
+          placeholder="搜索PO号、TI订单号或客户名称..."
           value={searchTerm}
           onChange={handleSearch}
           className="max-w-sm"
