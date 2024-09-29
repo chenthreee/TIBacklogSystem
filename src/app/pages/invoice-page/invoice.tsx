@@ -21,7 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 
 interface InvoiceInfo {
-  orderId: string
+  orderId: string  // 这里的 orderId 实际上是 purchaseOrderNumber
   customer: string
   components: InvoiceComponent[]
   pdfUrl?: string
@@ -146,7 +146,7 @@ export default function FinancialInvoice() {
       <div className="flex justify-between items-center">
         <Input
           type="text"
-          placeholder="搜索订单ID或客户..."
+          placeholder="搜索PO号..."
           value={searchTerm}
           onChange={handleSearch}
           className="max-w-sm"

@@ -13,12 +13,7 @@ export async function GET(request: Request) {
   const skip = (page - 1) * pageSize;
 
   const query = searchTerm
-    ? {
-        $or: [
-          { orderNumber: { $regex: searchTerm, $options: 'i' } },
-          { customer: { $regex: searchTerm, $options: 'i' } },
-        ],
-      }
+    ? { purchaseOrderNumber: { $regex: searchTerm, $options: 'i' } }
     : {};
 
   const totalOrders = await Order.countDocuments(query);
@@ -30,14 +25,14 @@ export async function GET(request: Request) {
     .lean();
 
   const invoiceInfo = orders.map(order => ({
-    orderId: order.orderNumber,
+    orderId: order.purchaseOrderNumber,
     customer: order.customer,
     components: order.components.map((component: any) => ({
       name: component.name,
       quantity: component.quantity,
       unitPrice: component.unitPrice,
-      invoiceNumber: ``,
-      invoiceDate: ``,
+      invoiceNumber: component.invoiceNumber || '',
+      invoiceDate: component.invoiceDate || '',
     })),
   }));
 

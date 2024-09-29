@@ -102,20 +102,22 @@ function QuotationTable({
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-1/9 px-3">元件名称</TableHead>
-                          <TableHead className="w-1/9 px-3">年用量</TableHead>
-                          <TableHead className="w-1/9 px-3">MOQ</TableHead>
-                          <TableHead className="w-1/9 px-3">NQ</TableHead>
-                          <TableHead className="w-1/9 px-3">报价</TableHead>
-                          <TableHead className="w-1/9 px-3">TI返回价格</TableHead>
-                          <TableHead className="w-1/9 px-3">小计</TableHead>
-                          <TableHead className="w-1/9 px-3">状态</TableHead>
-                          <TableHead className="w-1/9 px-3">操作</TableHead>
+                          <TableHead className="w-1/10 px-3">序号</TableHead>
+                          <TableHead className="w-1/10 px-3">元件名称</TableHead>
+                          <TableHead className="w-1/10 px-3">年用量</TableHead>
+                          <TableHead className="w-1/10 px-3">MOQ</TableHead>
+                          <TableHead className="w-1/10 px-3">NQ</TableHead>
+                          <TableHead className="w-1/10 px-3">报价</TableHead>
+                          <TableHead className="w-1/10 px-3">TI返回价格</TableHead>
+                          <TableHead className="w-1/10 px-3">小计</TableHead>
+                          <TableHead className="w-1/10 px-3">状态</TableHead>
+                          <TableHead className="w-1/10 px-3">操作</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {quotation.components.map((component: any) => (
+                        {quotation.components.map((component: any, index: number) => (
                           <TableRow key={component.id}>
+                            <TableCell className="px-3">{index + 1}</TableCell>
                             <TableCell className="px-3">{component.name}</TableCell>
                             <TableCell className="px-3">{component.quantity}</TableCell>
                             <TableCell className="px-3">{component.moq ?? 'N/A'}</TableCell>

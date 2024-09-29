@@ -6,12 +6,15 @@ export async function GET(request: NextRequest) {
   await dbConnect();
 
   const searchParams = request.nextUrl.searchParams;
-  const quoteNumber = searchParams.get('quoteNumber');
+  const componentName = searchParams.get('componentName');
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '10', 10);
   const skip = (page - 1) * limit;
 
-  const query = quoteNumber ? { quoteNumber: { $regex: quoteNumber, $options: 'i' } } : {};
+  let query = {};
+  if (componentName) {
+    query = { 'components.name': { $regex: componentName, $options: 'i' } };
+  }
 
   try {
     const quotations = await Quotation.find(query).skip(skip).limit(limit).lean();

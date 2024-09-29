@@ -348,6 +348,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead>序号</TableHead>
                           <TableHead>元件名称</TableHead>
                           <TableHead>数量</TableHead>
                           <TableHead>MOQ</TableHead>
@@ -361,7 +362,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {order.components.map((component) => {
+                        {order.components.map((component, index) => {
                           const localEdit = localEditedComponents[`${order._id}-${component.id}`];
                           const displayComponent = localEdit || component;
                           const isDeleted = displayComponent.status === 'deleted';
@@ -370,6 +371,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                           const componentTotal = isDeleted ? '0.000' : (quantity * unitPrice).toFixed(3);
                           return (
                             <TableRow key={component.id} className={isDeleted ? 'opacity-50' : ''}>
+                              <TableCell>{index + 1}</TableCell>
                               <TableCell>{displayComponent.name}</TableCell>
                               <TableCell>
                                 {quantityCheckResults[order._id]?.[component.id] !== undefined && (
