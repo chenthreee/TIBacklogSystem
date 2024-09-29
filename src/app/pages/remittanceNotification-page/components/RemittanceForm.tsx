@@ -25,6 +25,7 @@ export default function RemittanceForm({ onSubmit, onCancel }: RemittanceFormPro
   const [paymentDate, setPaymentDate] = useState<Date>(new Date());
   const [items, setItems] = useState<RemittanceItem[]>([{ invoiceNumber: '', amount: 0 }]);
 
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newRemittance = {
@@ -109,41 +110,43 @@ export default function RemittanceForm({ onSubmit, onCancel }: RemittanceFormPro
             </PopoverContent>
           </Popover>
         </div>
-        {items.map((item, index) => (
-          <div key={index} className="grid gap-2">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor={`invoiceNumber-${index}`} className="text-right">
-                发票号
-              </Label>
-              <Input
-                id={`invoiceNumber-${index}`}
-                value={item.invoiceNumber}
-                onChange={(e) => updateItem(index, 'invoiceNumber', e.target.value)}
-                className="col-span-3"
-                required
-              />
+        <div className="max-h-96 overflow-y-auto">
+          {items.map((item, index) => (
+            <div key={index} className="grid gap-2">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor={`invoiceNumber-${index}`} className="text-right">
+                  发票号
+                </Label>
+                <Input
+                  id={`invoiceNumber-${index}`}
+                  value={item.invoiceNumber}
+                  onChange={(e) => updateItem(index, 'invoiceNumber', e.target.value)}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor={`amount-${index}`} className="text-right">
+                  付款金额
+                </Label>
+                <Input
+                  id={`amount-${index}`}
+                  type="number"
+                  step="0.01"
+                  value={item.amount}
+                  onChange={(e) => updateItem(index, 'amount', parseFloat(e.target.value))}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              {index > 0 && (
+                <Button type="button" variant="outline" onClick={() => removeItem(index)}>
+                  删除
+                </Button>
+              )}
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor={`amount-${index}`} className="text-right">
-                付款金额
-              </Label>
-              <Input
-                id={`amount-${index}`}
-                type="number"
-                step="0.01"
-                value={item.amount}
-                onChange={(e) => updateItem(index, 'amount', parseFloat(e.target.value))}
-                className="col-span-3"
-                required
-              />
-            </div>
-            {index > 0 && (
-              <Button type="button" variant="outline" onClick={() => removeItem(index)}>
-                删除
-              </Button>
-            )}
-          </div>
-        ))}
+          ))}
+        </div>
         <Button type="button" variant="outline" onClick={addItem}>
           添加发票
         </Button>
