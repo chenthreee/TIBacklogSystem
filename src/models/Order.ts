@@ -25,9 +25,14 @@ const ComponentSchema = new mongoose.Schema({
   k3Code: String,
   type: String,
   description: String,
-  confirmations: [ConfirmationSchema], // 新增字段
+  confirmations: [ConfirmationSchema],
   moq: { type: Number, default: 0 },
   nq: { type: Number, default: 0 }
+});
+
+const ChangeLogEntrySchema = new mongoose.Schema({
+  componentName: String,
+  changes: [String]
 });
 
 const OrderSchema = new mongoose.Schema({
@@ -52,7 +57,8 @@ const OrderSchema = new mongoose.Schema({
     },
     username: {
       type: String
-    }
+    },
+    changes: [ChangeLogEntrySchema] // 新增字段，用于记录详细的变更日志
   }]
 });
 

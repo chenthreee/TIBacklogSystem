@@ -290,7 +290,8 @@ export default function OrderManagement() {
 
       const requestBody = { 
         components: componentsToSend,
-        username: user.username
+        username: user.username,
+        localEdits: localEditedComponents
       };
 
       // 发送修改请求
