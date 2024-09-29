@@ -127,7 +127,7 @@ export default function OrderManagement() {
 
   const handleEditComponent = (orderId: string, component: Component) => {
     setEditingComponent({ ...component, orderId })
-    fetchTiPrice(component.quoteNumber, component.name)
+    fetchTiPriceAndQuantities(component.quoteNumber, component.name)
   }
 
   const handleDeleteOrder = async (orderId: string) => {
@@ -166,7 +166,9 @@ export default function OrderManagement() {
       ...prev,
       [`${editedComponent.orderId}-${editedComponent.id}`]: {
         ...editedComponent,
-        unitPrice: tiPrice || editedComponent.unitPrice
+        unitPrice: tiPrice || editedComponent.unitPrice,
+        moq: editedComponent.moq,
+        nq: editedComponent.nq
       }
     }));
     setEditingComponent(null);
@@ -610,7 +612,7 @@ export default function OrderManagement() {
     }
   };
 
-  const fetchTiPrice = async (quoteNumber: string, componentName: string) => {
+  const fetchTiPriceAndQuantities = async (quoteNumber: string, componentName: string) => {
     try {
       const response = await fetch(`/api/quotations?quoteNumber=${quoteNumber}`);
       const data = await response.json();
@@ -619,6 +621,16 @@ export default function OrderManagement() {
         const matchedComponent = quotation.components.find((c: any) => c.name === componentName);
         if (matchedComponent) {
           setTiPrice(matchedComponent.tiPrice);
+          setEditingComponent((prev: Component | null) => {
+            if (prev) {
+              return {
+                ...prev,
+                moq: matchedComponent.moq,
+                nq: matchedComponent.nq
+              };
+            }
+            return prev;
+          });
         } else {
           setTiPrice(null);
         }
@@ -626,7 +638,7 @@ export default function OrderManagement() {
         setTiPrice(null);
       }
     } catch (error) {
-      console.error('获取 tiPrice 失败:', error);
+      console.error('获取 TI 价格和数量失败:', error);
       setTiPrice(null);
     }
   };
@@ -736,7 +748,7 @@ export default function OrderManagement() {
                   value={editingComponent.quoteNumber}
                   onChange={(e) => {
                     setEditingComponent({...editingComponent, quoteNumber: e.target.value});
-                    fetchTiPrice(e.target.value, editingComponent.name);
+                    fetchTiPriceAndQuantities(e.target.value, editingComponent.name);
                   }}
                   className="col-span-3"
                 />
@@ -749,6 +761,30 @@ export default function OrderManagement() {
                   id="edit-tiPrice"
                   type="number"
                   value={tiPrice !== null ? tiPrice : ''}
+                  readOnly
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-moq" className="text-right">
+                  MOQ
+                </Label>
+                <Input
+                  id="edit-moq"
+                  type="number"
+                  value={editingComponent.moq || ''}
+                  readOnly
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-nq" className="text-right">
+                  NQ
+                </Label>
+                <Input
+                  id="edit-nq"
+                  type="number"
+                  value={editingComponent.nq || ''}
                   readOnly
                   className="col-span-3"
                 />
