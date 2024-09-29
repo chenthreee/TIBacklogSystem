@@ -328,10 +328,10 @@ export default function OrderManagement() {
 
         const matchedComponents = quotation.components
           .map((component: any) => {
-            const excelMatch = excelData.find((row: any) => row['规格描述'].includes(component.name));
+            const excelMatch = excelData.find((row: any) => row['规格型号'].includes(component.name));
             if (excelMatch) {
               // 转换 Excel 日期
-              const excelDate = excelMatch['交期'];
+              const excelDate = excelMatch['交货日期'];
               let deliveryDate;
               if (typeof excelDate === 'number') {
                 // Excel 日期是从 1900 年 1 月 1 日开始的天数
@@ -346,9 +346,9 @@ export default function OrderManagement() {
 
               return {
                 ...component,
-                k3Code: excelMatch['K3编码'],
-                type: excelMatch['类型'],
-                description: excelMatch['规格描述'],
+                k3Code: excelMatch['物料长代码'],
+                type: excelMatch['物料名称'],
+                description: excelMatch['规格型号'],
                 quantity: isNaN(excelQuantity) ? component.quantity : excelQuantity, // 使用 Excel 中的数量，如果无效则保留原始数量
                 deliveryDate: deliveryDate,
                 quoteNumber: quotation.quoteNumber // 添加报价单号

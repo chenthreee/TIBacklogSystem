@@ -6,19 +6,32 @@ export async function GET(request: NextRequest) {
   await dbConnect();
 
   const searchParams = request.nextUrl.searchParams;
+  const quoteNumber = searchParams.get('quoteNumber');
   const componentName = searchParams.get('componentName');
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '10', 10);
   const skip = (page - 1) * limit;
 
   let query = {};
-  if (componentName) {
+  if (quoteNumber) {
+    query = { quoteNumber: quoteNumber };
+  } else if (componentName) {
     query = { 'components.name': { $regex: componentName, $options: 'i' } };
   }
 
   try {
-    const quotations = await Quotation.find(query).skip(skip).limit(limit).lean();
-    const totalQuotations = await Quotation.countDocuments(query);
+    let quotations;
+    let totalQuotations;
+
+    if (quoteNumber) {
+      // 如果提供了 quoteNumber，只返回匹配的单个报价单
+      quotations = await Quotation.find(query).lean();
+      totalQuotations = quotations.length;
+    } else {
+      // 否则，使用分页
+      quotations = await Quotation.find(query).skip(skip).limit(limit).lean();
+      totalQuotations = await Quotation.countDocuments(query);
+    }
 
     const formattedQuotations = quotations.map((q) => ({
       id: q._id?.toString(),
@@ -40,7 +53,12 @@ export async function GET(request: NextRequest) {
       })) : []
     }));
 
-    return NextResponse.json({ success: true, quotations: formattedQuotations, totalQuotations });
+    return NextResponse.json({ 
+      success: true, 
+      quotations: formattedQuotations, 
+      totalQuotations,
+      ...(quoteNumber ? {} : { totalPages: Math.ceil(totalQuotations / limit) })
+    });
   } catch (error) {
     console.error('Error in GET /api/quotations:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
