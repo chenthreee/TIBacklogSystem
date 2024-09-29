@@ -350,7 +350,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                         <TableRow>
                           <TableHead>序号</TableHead>
                           <TableHead>元件名称</TableHead>
-                          <TableHead>数量</TableHead>
+                          <TableHead>下单数量</TableHead>
                           <TableHead>MOQ</TableHead>
                           <TableHead>NQ</TableHead>
                           <TableHead>单价</TableHead>
