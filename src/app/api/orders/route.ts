@@ -16,7 +16,11 @@ export async function GET(req: NextRequest) {
   let query: any = {}
 
   if (searchTerm) {
-    query.purchaseOrderNumber = { $regex: searchTerm, $options: 'i' }
+    query.$or = [
+      { purchaseOrderNumber: { $regex: searchTerm, $options: 'i' } },
+      { tiOrderNumber: { $regex: searchTerm, $options: 'i' } },
+      { customer: { $regex: searchTerm, $options: 'i' } }
+    ]
   }
 
   if (orderStatus) {
@@ -48,7 +52,7 @@ export async function GET(req: NextRequest) {
       purchaseOrderNumber: order.purchaseOrderNumber,
       components: order.components,
       quoteNumber: order.quoteNumber,
-      apiLogs: order.apiLogs, // 确保包含这个字段
+      apiLogs: order.apiLogs,
     }))
 
     return NextResponse.json({ orders: formattedOrders, totalPages })
