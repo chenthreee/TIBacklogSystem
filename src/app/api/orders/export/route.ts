@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
           报价号: component.quoteNumber,
           发货日期: component.shippingDate,
           预计到达日期: component.estimatedDateOfArrival,
-          承运人: component.carrier,
+          快递单号: component.carrier,  // 这里改为 "快递单号"
           K3编码: component.k3Code,
           类型: component.type,
           规格描述: component.description,
