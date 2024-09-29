@@ -135,8 +135,9 @@ export default function OrderManagement() {
   }
 
   const handleEditComponent = (orderId: string, component: Component) => {
-    setEditingComponent({ ...component, orderId })
-    fetchTiPriceAndQuantities(component.quoteNumber, component.name)
+    const order = orders.find(o => o._id === orderId);
+    setEditingComponent({ ...component, orderId, orderStatus: order?.status });
+    fetchTiPriceAndQuantities(component.quoteNumber, component.name);
   }
 
   const handleDeleteOrder = async (orderId: string) => {
@@ -171,21 +172,70 @@ export default function OrderManagement() {
   }
 
   const handleSaveComponent = async (editedComponent: any) => {
-    setLocalEditedComponents(prev => ({
-      ...prev,
-      [`${editedComponent.orderId}-${editedComponent.id}`]: {
-        ...editedComponent,
-        unitPrice: tiPrice || editedComponent.unitPrice,
-        moq: editedComponent.moq,
-        nq: editedComponent.nq
-      }
-    }));
+    const updatedComponent = {
+      ...editedComponent,
+      unitPrice: tiPrice || editedComponent.unitPrice,
+      moq: editedComponent.moq,
+      nq: editedComponent.nq
+    };
+
+    if (editedComponent.orderStatus === "处理中") {
+      // 直接更新数据库
+      await updateComponentInDatabase(editedComponent.orderId, updatedComponent);
+      // 更新本地状态
+      setOrders(orders.map(order => 
+        order._id === editedComponent.orderId
+          ? {
+              ...order,
+              components: order.components.map(comp => 
+                comp.id === updatedComponent.id ? updatedComponent : comp
+              )
+            }
+          : order
+      ));
+      toast({
+        title: "组件已更新",
+        description: "组件信息已直接更新到数据库。",
+      });
+    } else {
+      // 原有的本地更新逻辑
+      setLocalEditedComponents(prev => ({
+        ...prev,
+        [`${editedComponent.orderId}-${editedComponent.id}`]: updatedComponent
+      }));
+      toast({
+        title: "组件已临时更新",
+        description: "组件信息已在页面上更新。请点击'修改'按钮以提交到TI。",
+      });
+    }
     setEditingComponent(null);
     setTiPrice(null);
-    toast({
-      title: "组件已临时更新",  
-      description: "组件信息已在页面上更新。请点击'修改'按钮以提交到TI。",
-    });
+  }
+
+  const updateComponentInDatabase = async (orderId: string, updatedComponent: Component) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}/components/${updatedComponent.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedComponent),
+      });
+
+      if (!response.ok) {
+        throw new Error('更新组件失败');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('更新组件时出错:', error);
+      toast({
+        title: "错误",
+        description: "更新组件失败，请稍后重试。",
+        variant: "destructive",
+      });
+    }
   }
 
   const handleModifyOrder = async (orderId: string) => {
