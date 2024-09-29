@@ -1,34 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Order from '@/models/Order'
-import Quotation from '@/models/Quotation' // 引入 Quotation 模型
 
 export async function GET(req: NextRequest) {
   await dbConnect()
 
   const searchParams = req.nextUrl.searchParams
-  const page = searchParams.get('page') || '1'
+  const page = parseInt(searchParams.get('page') || '1', 10)
   const searchTerm = searchParams.get('searchTerm') || ''
+  const orderStatus = searchParams.get('orderStatus') || ''
+  const componentStatus = searchParams.get('componentStatus') || ''
   const limit = 10
-  const skip = (Number(page) - 1) * limit
+  const skip = (page - 1) * limit
 
-  const query = searchTerm
-    ? {
-        $or: [
-          { customer: { $regex: searchTerm, $options: 'i' } },
-          { date: { $regex: searchTerm, $options: 'i' } },
-        ],
-      }
-    : {}
+  let query: any = {}
+
+  if (searchTerm) {
+    query.purchaseOrderNumber = { $regex: searchTerm, $options: 'i' }
+  }
+
+  if (orderStatus) {
+    query.status = orderStatus
+  }
+
+  if (componentStatus) {
+    query['components.status'] = componentStatus
+  }
 
   try {
-    const orders = await Order.find(query).skip(skip).limit(limit)
+    const orders = await Order.find(query)
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+
     const totalOrders = await Order.countDocuments(query)
     const totalPages = Math.ceil(totalOrders / limit)
 
-    return NextResponse.json({ orders, totalPages }, { status: 200 })
+    const formattedOrders = orders.map(order => ({
+      _id: order._id.toString(),
+      date: order.date,
+      customer: order.customer,
+      totalAmount: order.totalAmount,
+      status: order.status,
+      orderNumber: order.orderNumber,
+      tiOrderNumber: order.tiOrderNumber,
+      purchaseOrderNumber: order.purchaseOrderNumber,
+      components: order.components,
+      quoteNumber: order.quoteNumber,
+    }))
+
+    return NextResponse.json({ orders: formattedOrders, totalPages })
   } catch (error) {
-    return NextResponse.json({ error: '获取订单失败' }, { status: 500 })
+    console.error('Error in GET /api/orders:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
 

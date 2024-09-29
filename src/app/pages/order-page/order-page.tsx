@@ -12,6 +12,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import CreateOrderDialog from './createOrderDialog';
 import OrderTable from './orderTable';
@@ -87,15 +94,17 @@ export default function OrderManagement() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   const [localEditedComponents, setLocalEditedComponents] = useState<{[key: string]: Component}>({})
+  const [orderStatus, setOrderStatus] = useState<string>("all")
+  const [componentStatus, setComponentStatus] = useState<string>("all")
 
   useEffect(() => {
     fetchData()
-  }, [currentPage, searchTerm])
+  }, [currentPage, searchTerm, orderStatus, componentStatus])
 
   const fetchData = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/orders?page=${currentPage}&searchTerm=${searchTerm}`)
+      const response = await fetch(`/api/orders?page=${currentPage}&searchTerm=${searchTerm}&orderStatus=${orderStatus === 'all' ? '' : orderStatus}&componentStatus=${componentStatus === 'all' ? '' : componentStatus}`)
       if (!response.ok) {
         throw new Error('获取订单失败')
       }
@@ -172,7 +181,7 @@ export default function OrderManagement() {
     setEditingComponent(null);
     setTiPrice(null);
     toast({
-      title: "组件已临时更新",
+      title: "组件已临时更新",  
       description: "组件信息已在页面上更新。请点击'修改'按钮以提交到TI。",
     });
   }
@@ -636,11 +645,46 @@ export default function OrderManagement() {
       <div className="flex justify-between items-center">
         <Input
           type="text"
-          placeholder="搜索客户或日期..."
+          placeholder="搜索PO号..."
           value={searchTerm}
           onChange={handleSearch}
           className="max-w-sm"
         />
+        <div className="flex space-x-2">
+          <Select onValueChange={(value) => setOrderStatus(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="订单状态" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部</SelectItem>
+              <SelectItem value="处理中">处理中</SelectItem>
+              <SelectItem value="REJECT">REJECT</SelectItem>
+              <SelectItem value="PENDING">PENDING</SelectItem>
+              <SelectItem value="OPEN">OPEN</SelectItem>
+              <SelectItem value="BEING PROCESSED">BEING PROCESSED</SelectItem>
+              <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+              {/* 根据实际情况添加更多状态 */}
+            </SelectContent>
+          </Select>
+          <Select onValueChange={(value) => setComponentStatus(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="元件状态" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部</SelectItem>
+              <SelectItem value="Bid">Bid</SelectItem>
+              <SelectItem value="Not delivered">Not delivered</SelectItem>
+              <SelectItem value="Partially delivered">Partially delivered</SelectItem>
+              <SelectItem value="Fully delivered">Fully delivered</SelectItem>
+              <SelectItem value="Partially delivered,balance cancelled">balance cancelled</SelectItem>
+              <SelectItem value="Cancelled">Cancelled</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Rejected">Rejected</SelectItem>
+
+              {/* 根据实际情况添加更多状态 */}
+            </SelectContent>
+          </Select>
+        </div>
         <Button onClick={() => setIsCreateOrderDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" /> 创建订单
         </Button>
