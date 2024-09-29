@@ -6,17 +6,29 @@ export async function GET(request: NextRequest) {
   await dbConnect();
 
   const searchParams = request.nextUrl.searchParams;
+  const searchTerm = searchParams.get('search') || '';
   const quoteNumber = searchParams.get('quoteNumber');
-  const componentName = searchParams.get('componentName');
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '10', 10);
   const skip = (page - 1) * limit;
 
   let query = {};
+
   if (quoteNumber) {
+    // 如果提供了 quoteNumber，优先处理这个查询
     query = { quoteNumber: quoteNumber };
-  } else if (componentName) {
-    query = { 'components.name': { $regex: componentName, $options: 'i' } };
+  } else if (searchTerm) {
+    // 如果没有 quoteNumber，但有 searchTerm，使用之前的搜索逻辑
+    const numericSearchTerm = parseFloat(searchTerm);
+    
+    query = {
+      $or: [
+        { 'components.name': { $regex: searchTerm, $options: 'i' } },
+        { customer: { $regex: searchTerm, $options: 'i' } },
+        { quoteNumber: { $regex: searchTerm, $options: 'i' } },
+        ...(isNaN(numericSearchTerm) ? [] : [{ quoteNumber: numericSearchTerm }])
+      ]
+    };
   }
 
   try {
@@ -24,7 +36,7 @@ export async function GET(request: NextRequest) {
     let totalQuotations;
 
     if (quoteNumber) {
-      // 如果提供了 quoteNumber，只返回匹配的单个报价单
+      // 如果是按 quoteNumber 查询，我们只需要返回一个报价单
       quotations = await Quotation.find(query).lean();
       totalQuotations = quotations.length;
     } else {
