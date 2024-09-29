@@ -21,7 +21,7 @@ function SearchAndImport({
     <div className="flex justify-between items-center">
       <Input
         type="text"
-        placeholder="搜索客户或日期..."
+        placeholder="搜索元件名称..."
         value={searchTerm}
         onChange={handleSearch}
         className="max-w-sm"

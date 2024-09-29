@@ -31,9 +31,9 @@ interface Component {
   nq: number; // 新增 NQ 字段
 }
 
-const fetchQuotations = async (page: number, searchTerm: string) => {
+const fetchQuotations = async (page: number, componentName: string) => {
   try {
-    const response = await fetch(`/api/quotations?quoteNumber=${searchTerm}&page=${page}&limit=10`);
+    const response = await fetch(`/api/quotations?componentName=${componentName}&page=${page}&limit=10`);
     const data = await response.json();
 
     if (!data.success) {

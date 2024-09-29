@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const query = searchTerm
     ? {
         $or: [
-          { orderNumber: { $regex: searchTerm, $options: 'i' } },
+          { purchaseOrderNumber: { $regex: searchTerm, $options: 'i' } },
           { customer: { $regex: searchTerm, $options: 'i' } },
         ],
       }
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const orders = await Order.find(query)
-      .select('orderNumber customer status tiOrderNumber components')
+      .select('purchaseOrderNumber customer status tiOrderNumber components')
       .skip(skip)
       .limit(limit)
 
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     const totalPages = Math.ceil(totalOrders / limit)
 
     const logisticsInfo = orders.map(order => ({
-      orderId: order.orderNumber,
+      orderId: order.purchaseOrderNumber,
       customer: order.customer,
       status: order.status,
       tiOrderNumber: order.tiOrderNumber,
@@ -41,7 +41,6 @@ export async function GET(req: NextRequest) {
         carrier: component.carrier || ''
       }))
     }));
-    
 
     return NextResponse.json({ logisticsInfo, totalPages }, { status: 200 })
   } catch (error) {
