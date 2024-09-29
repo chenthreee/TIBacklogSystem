@@ -685,8 +685,8 @@ export default function OrderManagement() {
             <SelectContent>
               <SelectItem value="all">全部</SelectItem>
               <SelectItem value="Bid">Bid</SelectItem>
-              <SelectItem value="Not delivered">Not delivered</SelectItem>
-              <SelectItem value="Partially delivered">Partially delivered</SelectItem>
+              <SelectItem value="Not Delivered">Not Delivered</SelectItem>
+              <SelectItem value="Partially Delivered">Partially Delivered</SelectItem>
               <SelectItem value="Fully delivered">Fully delivered</SelectItem>
               <SelectItem value="Partially delivered,balance cancelled">balance cancelled</SelectItem>
               <SelectItem value="Cancelled">Cancelled</SelectItem>
