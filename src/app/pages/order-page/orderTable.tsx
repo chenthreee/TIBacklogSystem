@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle, Edit, Trash2, ChevronUp, ChevronDown, Pencil, Search, AlertCircle, FileText, Check, X, Plus } from "lucide-react";
+import { CheckCircle, Edit, Trash2, ChevronUp, ChevronDown, Pencil, Search, AlertCircle, FileText, Check, X, Plus, Download } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Order {
   _id: string;
@@ -86,6 +87,7 @@ interface OrderTableProps {
   handleDeleteComponent: (orderId: string, componentId: string) => void;
   handleUpdatePurchaseOrderNumber: (orderId: string, newPurchaseOrderNumber: string) => Promise<void>;
   handleAddComponent: (orderId: string, newComponent: Partial<Component>) => Promise<void>;
+  handleExportOrders: (orderIds: string[]) => void;
 }
 
 const OrderTable: React.FC<OrderTableProps> = ({
@@ -100,7 +102,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
   localEditedComponents,
   handleDeleteComponent,
   handleUpdatePurchaseOrderNumber,
-  handleAddComponent
+  handleAddComponent,
+  handleExportOrders
 }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [componentToDelete, setComponentToDelete] = useState<{ orderId: string, componentId: string } | null>(null);
@@ -121,6 +124,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
     type: '',
     description: '',
   });
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   const openDeleteDialog = (orderId: string, componentId: string) => {
     setComponentToDelete({ orderId, componentId });
@@ -224,11 +229,47 @@ const OrderTable: React.FC<OrderTableProps> = ({
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedOrders([]);
+    } else {
+      setSelectedOrders(orders.map(order => order._id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const handleSelectOrder = (orderId: string) => {
+    setSelectedOrders(prev => 
+      prev.includes(orderId) 
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const handleExport = () => {
+    handleExportOrders(selectedOrders);
+  };
+
   return (
     <>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center">
+          <Checkbox
+            checked={selectAll}
+            onCheckedChange={handleSelectAll}
+            id="select-all"
+          />
+          <label htmlFor="select-all" className="ml-2">全选</label>
+        </div>
+        <Button onClick={handleExport} disabled={selectedOrders.length === 0}>
+          <Download className="mr-2 h-4 w-4" />
+          导出选中订单
+        </Button>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[50px]"></TableHead>
             <TableHead>PO号</TableHead>
             <TableHead>TI订单号</TableHead>
             <TableHead>日期</TableHead>
@@ -242,6 +283,12 @@ const OrderTable: React.FC<OrderTableProps> = ({
           {orders.map((order) => (
             <React.Fragment key={order._id}>
               <TableRow>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedOrders.includes(order._id)}
+                    onCheckedChange={() => handleSelectOrder(order._id)}
+                  />
+                </TableCell>
                 <TableCell>
                   {editingOrderId === order._id ? (
                     <div className="flex items-center space-x-2">

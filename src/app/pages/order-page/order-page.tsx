@@ -703,6 +703,62 @@ export default function OrderManagement() {
     }
   };
 
+  const handleExportOrders = async (orderIds: string[]) => {
+    try {
+      const response = await fetch('/api/orders/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error('导出失败');
+      }
+
+      const data = await response.json();
+
+      // 创建工作簿
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(data);
+
+      // 将工作表添加到工作簿
+      XLSX.utils.book_append_sheet(wb, ws, "导出数据");
+
+      // 生成二进制字符串
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+
+      // 转换为 Blob
+      const blob = new Blob([s2ab(wbout)], { type: "application/octet-stream" });
+
+      // 创建下载链接
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "订单导出.xlsx";
+      a.click();
+
+      // 清理
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('导出订单时出错:', error);
+      toast({
+        title: "错误",
+        description: "导出订单失败，请稍后重试。",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // 辅助函数：将字符串转换为 ArrayBuffer
+  function s2ab(s: string) {
+    const buf = new ArrayBuffer(s.length);
+    const view = new Uint8Array(buf);
+    for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+    return buf;
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -779,6 +835,7 @@ export default function OrderManagement() {
             handleDeleteComponent={handleDeleteComponent} 
             handleUpdatePurchaseOrderNumber={handleUpdatePurchaseOrderNumber}
             handleAddComponent={handleAddComponent}
+            handleExportOrders={handleExportOrders}
           />
         </div>
       )}
