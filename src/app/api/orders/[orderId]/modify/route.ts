@@ -34,8 +34,10 @@ export async function POST(
     for (const component of components) {
       const originalComponent = order.components.find((c: any) => c.id === component.id)
 
-      console.error("component id modified is : ",component.id)
-      const localEdit = localEdits[component.id]
+      console.error("component id modified is : ", component.id)
+      
+      // 修改 localEdit 的取值逻辑
+      const localEdit = localEdits[`${orderId}-${component.id}`]
 
       if (localEdit) {
         let logEntry = {

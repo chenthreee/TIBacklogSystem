@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Info } from "lucide-react";
 
 interface Order {
   _id: string;
@@ -44,6 +45,7 @@ interface Order {
     operationType: 'submit' | 'modify';
     timestamp: string;
     username: string;
+    changes: ChangeLogEntry[];
   }[];
 }
 
@@ -90,6 +92,11 @@ interface OrderTableProps {
   handleExportOrders: (orderIds: string[]) => void;
 }
 
+interface ChangeLogEntry {
+  componentName: string;
+  changes: string[];
+}
+
 const OrderTable: React.FC<OrderTableProps> = ({
   orders,
   handleSubmitOrder,
@@ -110,7 +117,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
   const [quantityCheckResults, setQuantityCheckResults] = useState<{ [key: string]: { [key: string]: boolean } }>({});
   const [isCheckingQuantities, setIsCheckingQuantities] = useState(false);
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
-  const [currentLogs, setCurrentLogs] = useState<{operationType: string, timestamp: string, username: string}[]>([]);
+  const [currentLogs, setCurrentLogs] = useState<Order['apiLogs']>([]);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [editingPurchaseOrderNumber, setEditingPurchaseOrderNumber] = useState<string>('');
   const [isAddComponentDialogOpen, setIsAddComponentDialogOpen] = useState(false);
@@ -126,6 +133,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
   });
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [isChangeDetailsDialogOpen, setIsChangeDetailsDialogOpen] = useState(false);
+  const [currentChangeDetails, setCurrentChangeDetails] = useState<ChangeLogEntry[]>([]);
 
   const openDeleteDialog = (orderId: string, componentId: string) => {
     setComponentToDelete({ orderId, componentId });
@@ -190,7 +199,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
     });
   };
 
-  const handleOpenLogDialog = (logs: {operationType: string, timestamp: string, username: string}[]) => {
+  const handleOpenLogDialog = (logs: Order['apiLogs']) => {
     setCurrentLogs(logs);
     setIsLogDialogOpen(true);
   };
@@ -248,6 +257,11 @@ const OrderTable: React.FC<OrderTableProps> = ({
 
   const handleExport = () => {
     handleExportOrders(selectedOrders);
+  };
+
+  const handleOpenChangeDetailsDialog = (changes: ChangeLogEntry[]) => {
+    setCurrentChangeDetails(changes);
+    setIsChangeDetailsDialogOpen(true);
   };
 
   return (
@@ -499,6 +513,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                   <TableHead className="w-1/5">操作类型</TableHead>
                   <TableHead className="w-2/5">时间</TableHead>
                   <TableHead className="w-2/5">变更人</TableHead>
+                  <TableHead className="w-1/5">变更详情</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -507,6 +522,18 @@ const OrderTable: React.FC<OrderTableProps> = ({
                     <TableCell>{log.operationType === 'submit' ? '提交' : '修改'}</TableCell>
                     <TableCell>{formatDate(log.timestamp)}</TableCell>
                     <TableCell>{log.username}</TableCell>
+                    <TableCell>
+                      {log.changes && log.changes.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenChangeDetailsDialog(log.changes)}
+                        >
+                          <Info className="h-4 w-4 mr-1" />
+                          查看详情
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -514,6 +541,41 @@ const OrderTable: React.FC<OrderTableProps> = ({
           </div>
           <DialogFooter>
             <Button onClick={() => setIsLogDialogOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isChangeDetailsDialogOpen} onOpenChange={setIsChangeDetailsDialogOpen}>
+        <DialogContent className="sm:max-w-[700px] bg-white">
+          <DialogHeader>
+            <DialogTitle>变更详情</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 max-h-[60vh] overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-1/2">变更的元件</TableHead>
+                  <TableHead className="w-1/2">变更的具体操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentChangeDetails.map((detail, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{detail.componentName}</TableCell>
+                    <TableCell>
+                      <ul className="list-disc list-inside">
+                        {detail.changes.map((change, changeIndex) => (
+                          <li key={changeIndex}>{change}</li>
+                        ))}
+                      </ul>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsChangeDetailsDialogOpen(false)}>关闭</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
