@@ -1,6 +1,8 @@
+import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Pencil, Trash2, Send, Search, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ChevronDown, ChevronUp, Pencil, Trash2, Send, Search, Plus, Download } from "lucide-react";
 
 interface QuotationTableProps {
   quotations: any[];
@@ -12,6 +14,7 @@ interface QuotationTableProps {
   handleEditComponent: (quotationId: number, component: any) => void;
   handleDeleteComponent: (quotationId: string, componentId: string) => void;
   handleAddComponent: (quotationId: string) => void;
+  handleExportQuotations: (quotationIds: string[]) => void;
 }
 
 function QuotationTable({
@@ -23,13 +26,53 @@ function QuotationTable({
   handleDeleteQuotation,
   handleEditComponent,
   handleDeleteComponent,
-  handleAddComponent
+  handleAddComponent,
+  handleExportQuotations
 }: QuotationTableProps) {
+  const [selectedQuotations, setSelectedQuotations] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedQuotations([]);
+    } else {
+      setSelectedQuotations(quotations.map(quotation => quotation.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const handleSelectQuotation = (quotationId: string) => {
+    setSelectedQuotations(prev => 
+      prev.includes(quotationId) 
+        ? prev.filter(id => id !== quotationId)
+        : [...prev, quotationId]
+    );
+  };
+
+  const handleExport = () => {
+    handleExportQuotations(selectedQuotations);
+  };
+
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="flex justify-between items-center p-4">
+        <div className="flex items-center">
+          <Checkbox
+            checked={selectAll}
+            onCheckedChange={handleSelectAll}
+            id="select-all"
+          />
+          <label htmlFor="select-all" className="ml-2">全选</label>
+        </div>
+        <Button onClick={handleExport} disabled={selectedQuotations.length === 0}>
+          <Download className="mr-2 h-4 w-4" />
+          导出选中报价单
+        </Button>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[50px]"></TableHead>
             <TableHead className="w-1/6 px-4">TI报价号</TableHead>
             <TableHead className="w-1/6 px-4">日期</TableHead>
             <TableHead className="w-1/6 px-4">客户</TableHead>
@@ -40,8 +83,14 @@ function QuotationTable({
         </TableHeader>
         <TableBody>
           {quotations.map((quotation) => (
-            <>
-              <TableRow key={quotation.id}>
+            <React.Fragment key={quotation.id}>
+              <TableRow>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedQuotations.includes(quotation.id)}
+                    onCheckedChange={() => handleSelectQuotation(quotation.id)}
+                  />
+                </TableCell>
                 <TableCell className="px-4">{quotation.quoteNumber || '未提交'}</TableCell>
                 <TableCell className="px-4">{quotation.date}</TableCell>
                 <TableCell className="px-4">{quotation.customer}</TableCell>
@@ -151,7 +200,7 @@ function QuotationTable({
                   </TableCell>
                 </TableRow>
               )}
-            </>
+            </React.Fragment>
           ))}
         </TableBody>
       </Table>
