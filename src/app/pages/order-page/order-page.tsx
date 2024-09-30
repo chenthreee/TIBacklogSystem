@@ -283,11 +283,11 @@ export default function OrderManagement() {
 
       // 如果有不可修改的组件，提示用户
       if (unmodifiableComponents.length > 0) {
-        toast({
-          title: "部分组件无法修改",
-          description: `以下组件已过修改窗口期：${unmodifiableComponents.join(', ')}`,
-          variant: "destructive",
-        });
+        // toast({
+        //   title: "部分组件无法修改",
+        //   description: `以下组件已过修改窗口期：${unmodifiableComponents.join(', ')}`,
+        //   variant: "destructive",
+        // });
       }
 
       const requestBody = { 
