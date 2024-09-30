@@ -30,6 +30,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Info } from "lucide-react";
+import { CANCELLED } from 'dns';
 
 interface Order {
   _id: string;
@@ -446,7 +447,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                               <TableCell>{displayComponent.nq}</TableCell>
                               <TableCell>${unitPrice.toFixed(3)}</TableCell>
                               <TableCell>${componentTotal}</TableCell>
-                              <TableCell>{isDeleted ? '已删除' : displayComponent.status}</TableCell>
+                              <TableCell>{isDeleted ? 'CANCELLED' : displayComponent.status}</TableCell>
                               <TableCell>{displayComponent.deliveryDate}</TableCell>
                               <TableCell>
                                 {displayComponent.confirmations && displayComponent.confirmations.length > 0 ? (
