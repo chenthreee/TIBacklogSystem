@@ -447,7 +447,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                               <TableCell>{displayComponent.nq}</TableCell>
                               <TableCell>${unitPrice.toFixed(3)}</TableCell>
                               <TableCell>${componentTotal}</TableCell>
-                              <TableCell>{isDeleted ? 'CANCELLED' : displayComponent.status}</TableCell>
+                              <TableCell>{isDeleted ? 'Cancelled' : displayComponent.status}</TableCell>
                               <TableCell>{displayComponent.deliveryDate}</TableCell>
                               <TableCell>
                                 {displayComponent.confirmations && displayComponent.confirmations.length > 0 ? (
