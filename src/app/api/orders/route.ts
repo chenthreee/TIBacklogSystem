@@ -67,16 +67,18 @@ export async function POST(request: Request) {
     await dbConnect();
     const data = await request.json();
     
-    // 获取报价ID和组件
-    const { quotationId, components: orderComponents } = data;
+    // 获取组件
+    const { components: orderComponents } = data;
 
     // 使用传入的 tiPrice 作为 unitPrice
     const updatedComponents = orderComponents.map((component: any) => ({
       ...component,
-      unitPrice: component.tiPrice // 使用传入的 tiPrice 作为 unitPrice
+      unitPrice: component.tiPrice, // 使用传入的 tiPrice 作为 unitPrice
+      moq: component.moq, // 确保 MOQ 被包含
+      nq: component.nq // 确保 NQ 被包含
     }));
 
-    console.error('更新后components:', JSON.stringify(updatedComponents, null, 2));
+    console.log('更新后components:', JSON.stringify(updatedComponents, null, 2));
 
     // 创建新订单
     const newOrder = new Order({
@@ -87,10 +89,6 @@ export async function POST(request: Request) {
 
     // 保存订单
     const savedOrder = await newOrder.save();
-
-    // 更新 quotationId 为当前订单的 ObjectId
-    savedOrder.quotationId = savedOrder._id;
-    await savedOrder.save();
 
     return NextResponse.json(savedOrder, { status: 201 });
   } catch (error) {

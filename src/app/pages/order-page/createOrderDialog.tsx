@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Plus, Minus } from 'lucide-react';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CreateOrderDialogProps {
   isCreateOrderDialogOpen: boolean;
@@ -15,7 +17,7 @@ interface CreateOrderDialogProps {
     purchaseOrderNumber: string;
   };
   setNewOrder: React.Dispatch<React.SetStateAction<any>>;
-  handleCreateOrder: () => void;
+  handleCreateOrder: (quoteNumbers: string[]) => void;
   handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -31,6 +33,7 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
   const [year, setYear] = useState(newOrder.date.split('-')[0] || '');
   const [month, setMonth] = useState(newOrder.date.split('-')[1] || '');
   const [day, setDay] = useState(newOrder.date.split('-')[2] || '');
+  const [quoteNumbers, setQuoteNumbers] = useState<string[]>(['']);
 
   useEffect(() => {
     setNewOrder({ ...newOrder, date: `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}` });
@@ -80,6 +83,23 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
     } else {
       setDay(newDay);
     }
+  };
+
+  const addQuoteNumber = () => {
+    setQuoteNumbers([...quoteNumbers, '']);
+  };
+
+  const removeQuoteNumber = (index: number) => {
+    if (quoteNumbers.length > 1) {
+      const newQuoteNumbers = quoteNumbers.filter((_, i) => i !== index);
+      setQuoteNumbers(newQuoteNumbers);
+    }
+  };
+
+  const handleQuoteNumberChange = (index: number, value: string) => {
+    const newQuoteNumbers = [...quoteNumbers];
+    newQuoteNumbers[index] = value;
+    setQuoteNumbers(newQuoteNumbers);
   };
 
   return (
@@ -140,14 +160,41 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
               className="col-span-3"
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="quoteNumber" className="text-right">TI报价号</Label>
-            <Input
-              id="quoteNumber"
-              value={newOrder.quoteNumber}
-              onChange={(e) => setNewOrder({ ...newOrder, quoteNumber: e.target.value })}
-              className="col-span-3"
-            />
+          <div className="grid gap-2">
+            {quoteNumbers.map((quoteNumber, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Label htmlFor={`quoteNumber-${index}`} className="w-20 flex-shrink-0">TI报价号</Label>
+                <Input
+                  id={`quoteNumber-${index}`}
+                  value={quoteNumber}
+                  onChange={(e) => handleQuoteNumberChange(index, e.target.value)}
+                  className="flex-grow"
+                  placeholder={`TI报价号 ${index + 1}`}
+                />
+                {index === quoteNumbers.length - 1 && (
+                  <Button 
+                    type="button" 
+                    onClick={addQuoteNumber} 
+                    size="icon"
+                    variant="outline"
+                    className="flex-shrink-0"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
+                {quoteNumbers.length > 1 && (
+                  <Button 
+                    type="button" 
+                    onClick={() => removeQuoteNumber(index)} 
+                    size="icon"
+                    variant="outline"
+                    className="flex-shrink-0"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="purchaseOrderNumber" className="text-right">采购订单号</Label>
@@ -171,7 +218,7 @@ const CreateOrderDialog: React.FC<CreateOrderDialogProps> = ({
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleCreateOrder}>创建订单</Button>
+          <Button onClick={() => handleCreateOrder(quoteNumbers)}>创建订单</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -364,63 +364,66 @@ export default function OrderManagement() {
     }
   }
 
-  const handleCreateOrder = async () => {
+  const handleCreateOrder = async (quoteNumbers: string[]) => {
     try {
       let orderData;
 
       if (excelData.length > 0) {
-        // 如果有 Excel 数据，使用现有的逻辑
-        const quotationResponse = await fetch(`/api/quotations?quoteNumber=${newOrder.quoteNumber}`);
-        const quotationData = await quotationResponse.json();
+        const matchedComponents = [];
 
-        if (!quotationData.success) {
-          throw new Error('获取报价单失败');
-        }
+        for (const excelRow of excelData) {
+          let matchedComponent = null;
 
-        const quotation = quotationData.quotations[0];
+          for (const quoteNumber of quoteNumbers) {
+            const quotationResponse = await fetch(`/api/quotations?quoteNumber=${quoteNumber}`);
+            const quotationData = await quotationResponse.json();
 
-        const matchedComponents = quotation.components
-          .map((component: any) => {
-            const excelMatch = excelData.find((row: any) => row['规格型号'].includes(component.name));
-            if (excelMatch) {
-              // 转换 Excel 日期
-              const excelDate = excelMatch['交货日期'];
-              let deliveryDate;
-              if (typeof excelDate === 'number') {
-                // Excel 日期是从 1900 年 1 月 1 日开始的天数
-                const date = new Date((excelDate - 25569) * 86400 * 1000);
-                deliveryDate = date.toISOString().split('T')[0]; // 格式化为 YYYY-MM-DD
-              } else {
-                deliveryDate = excelDate; // 如果不是数字，保持原样
+            if (quotationData.success) {
+              const quotation = quotationData.quotations[0];
+              matchedComponent = quotation.components.find((component: any) => 
+                excelRow['规格型号'].includes(component.name)
+              );
+
+              if (matchedComponent) {
+                // 转换 Excel 日期
+                const excelDate = excelRow['交货日期'];
+                let deliveryDate;
+                if (typeof excelDate === 'number') {
+                  const date = new Date((excelDate - 25569) * 86400 * 1000);
+                  deliveryDate = date.toISOString().split('T')[0];
+                } else {
+                  deliveryDate = excelDate;
+                }
+
+                // 解析 Excel 中的数量
+                const excelQuantity = parseInt(excelRow['数量']);
+
+                matchedComponents.push({
+                  ...matchedComponent,
+                  k3Code: excelRow['物料长代码'],
+                  type: excelRow['物料名称'],
+                  description: excelRow['规格型号'],
+                  quantity: isNaN(excelQuantity) ? matchedComponent.quantity : excelQuantity,
+                  deliveryDate: deliveryDate,
+                  quoteNumber: quoteNumber
+                });
+
+                break; // 找到匹配后停止搜索
               }
-
-              // 解析 Excel 中的数量
-              const excelQuantity = parseInt(excelMatch['数量']);
-
-              return {
-                ...component,
-                k3Code: excelMatch['物料长代码'],
-                type: excelMatch['物料名称'],
-                description: excelMatch['规格型号'],
-                quantity: isNaN(excelQuantity) ? component.quantity : excelQuantity, // 使用 Excel 中的数量，如果无效则保留原始数量
-                deliveryDate: deliveryDate,
-                quoteNumber: quotation.quoteNumber // 添加报价单号
-              };
             }
-            return null; // 如果没有匹配,返回null
-          })
-          .filter((component: any) => component !== null); // 过滤掉所有null值
+          }
+
+          if (!matchedComponent) {
+            console.warn(`未找到匹配的组件: ${excelRow['规格型号']}`);
+          }
+        }
 
         if (matchedComponents.length === 0) {
           throw new Error('没有找到匹配的组件');
         }
 
-        console.log('Matched components:', matchedComponents); // 添加这行来检查匹配的组件
-
         orderData = {
           ...newOrder,
-          quotationId: quotation.id, // 设置 quotationId
-          orderNumber: newOrder.purchaseOrderNumber, // 设置 orderNumber
           components: matchedComponents,
           totalAmount: matchedComponents.reduce((sum: number, comp: any) => sum + (comp.quantity * comp.tiPrice), 0),
         };
@@ -428,13 +431,12 @@ export default function OrderManagement() {
         // 如果没有 Excel 数据，创建一个空订单
         orderData = {
           ...newOrder,
-          orderNumber: newOrder.purchaseOrderNumber,
           components: [],
           totalAmount: 0,
         };
       }
       
-      console.log('Order data to be sent:', orderData); // 添加这行来检查发送的订单数据
+      console.log('Order data to be sent:', orderData);
 
       const response = await fetch('/api/orders', {
         method: 'POST',
