@@ -22,23 +22,28 @@ if (!cached) {
 }
 
 
-//修改判断
 async function dbConnect() {
-  if (cached.conn) {
+  if (cached?.conn) {
     return cached.conn;
   }
 
-  if (!cached.promise) {
+  if (!cached?.promise) {
     const opts = {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose;
-    });
+    if (cached && MONGODB_URI) {
+      cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+        return mongoose;
+      });
+    }
   }
-  cached.conn = await cached.promise;
-  return cached.conn;
+  if (cached) {
+    cached.conn = await cached.promise;
+  } else {
+    throw new Error('MongoDB connection not initialized');
+  }
+  return cached!.conn;
 }
 
 export default dbConnect;
