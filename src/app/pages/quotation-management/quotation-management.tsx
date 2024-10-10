@@ -152,7 +152,7 @@ export default function QuotationManagement() {
       );
 
       console.log("Response status:", response.status);
-      if (!response.ok) {
+      if (!response.ok) { 
         throw new Error("Failed to update component");
       }
 
@@ -248,6 +248,7 @@ export default function QuotationManagement() {
     setIsCustomerDialogOpen(false);
     document.getElementById("excel-upload")?.click();
   };
+
   const handleSendToTI = async (quotationId: string) => {
     try {
       const response = await fetch(
@@ -295,7 +296,7 @@ export default function QuotationManagement() {
       await fetchData(); // 重新获取数据以更新列表
       toast({
         title: "报价已删除",
-        description: "报价已成功从数据库中删除。",
+        description: "报价已成功从数据库中删除并已经刷新页面。",
       });
     } catch (error) {
       console.error("删除报价时出错:", error);
