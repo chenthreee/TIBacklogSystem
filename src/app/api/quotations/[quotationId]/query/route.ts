@@ -46,7 +46,9 @@ export async function GET(
 
     // 更新报价单中的组件信息
     let updatedComponents = quotation.components.map((component: any) => {
-      const tiComponent = tiQuote.lineItems.find((item: any) => item.tiPartNumber === component.name);
+      const tiComponent = tiQuote.lineItems.find((item: any) => 
+        item.tiPartNumber.trim().toLowerCase() === component.name.trim().toLowerCase()
+      );
       if (tiComponent) {
         console.log(`Updating component ${component.name}:`);
         console.log(`  - Original MOQ: ${component.moq}`);
@@ -56,6 +58,7 @@ export async function GET(
         
         const updatedComponent = {
           ...component.toObject(),
+          name: tiComponent.tiPartNumber.trim(), // 更新组件名称，去除多余的空格
           status: tiComponent.status,
           tiPrice: tiComponent.tiUnitPrice,
           moq: tiComponent.minimumOrderQuantity,
@@ -108,26 +111,6 @@ export async function GET(
     quotation.components.forEach((component: any) => {
       console.log(`Component ${component.name} - MOQ after update: ${component.moq}`);
     });
-
-    console.log('Sending response:', JSON.stringify({
-      quotation: {
-        ...quotation.toObject(),
-        components: quotation.components.map((component: any) => ({
-          ...component.toObject(),
-          moq: component.moq
-        }))
-      },
-      tiResponse: {
-        ...tiResponse,
-        quotes: tiResponse.quotes.map((quote: any) => ({
-          ...quote,
-          lineItems: quote.lineItems.map((item: any) => ({
-            ...item,
-            minimumOrderQuantity: item.minimumOrderQuantity
-          }))
-        }))
-      }
-    }, null, 2));
 
     return NextResponse.json({
       quotation: quotation.toObject(),
