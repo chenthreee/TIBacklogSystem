@@ -29,14 +29,16 @@ export async function GET(
 
     order.status = tiResponse.orders[0].orderStatus
     order.components = order.components.map((comp: any) => {
-      const tiLineItem = tiResponse.orders[0].lineItems.find((li: any) => li.tiPartNumber === comp.name)
+      const tiLineItem = tiResponse.orders[0].lineItems.find((li: any) => 
+        li.tiPartNumber.trim().toLowerCase() === comp.name.trim().toLowerCase()
+      )
       if (tiLineItem) {
         comp.status = tiLineItem.status
         comp.quantity = tiLineItem.tiTotalOrderItemQuantity
         comp.unitPrice = tiLineItem.customerAnticipatedUnitPrice
         comp.tiLineItemNumber = tiLineItem.tiLineItemNumber
+        comp.name = tiLineItem.tiPartNumber.trim() // 更新组件名称，去除多余的空格
         
-        // 更新确认信息
         if (tiLineItem.schedules && tiLineItem.schedules[0] && tiLineItem.schedules[0].confirmations) {
           comp.confirmations = tiLineItem.schedules[0].confirmations.map((conf: any) => ({
             tiScheduleLineNumber: conf.tiScheduleLineNumber,
@@ -48,7 +50,7 @@ export async function GET(
             customerRequestedShipDate: conf.customerRequestedShipDate
           }))
         } else {
-          comp.confirmations = [] // 如果没有确认信息，设置为空数组
+          comp.confirmations = []
         }
       }
       return comp
