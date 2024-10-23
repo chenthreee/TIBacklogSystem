@@ -123,7 +123,7 @@ export class TIBacklogQuotes {
     const url = getEndpoint(`${this.server}/v2/backlog/quotes/test`);
     const data = {
       quote: {
-        endCustomerCompanyName: customerName,
+        endCustomerCompanyName: 'BAIQIANCHENG SHENZHEN',
         checkoutProfileId: '1E9B82A96F4D97CCE063DE21BB8B74B9',
         requestedUnitPriceCurrencyCode: 'USD',
         lineItems: this.lineItems,
@@ -175,7 +175,7 @@ export class TIBacklogOrders {
     const url = getEndpoint(`${this.server}/v2/backlog/orders/test`);
     const data = {
       order: {
-        endCustomerCompanyName: customerName,
+        endCustomerCompanyName: 'BAIQIANCHENG SHENZHEN',
         checkoutProfileId: '1E9B82A96F4D97CCE063DE21BB8B74B9',
         customerPurchaseOrderNumber: customerOrderNumber,
         shipToAccountNumber: shipTo,
@@ -191,7 +191,7 @@ export class TIBacklogOrders {
     const url = getEndpoint(`${this.server}/v2/backlog/orders/changeByCustomerPurchaseOrderNumber/test`);
     const data = {
       order: {
-        endCustomerCompanyName: customerName,
+        endCustomerCompanyName: 'BAIQIANCHENG SHENZHEN',
         checkoutProfileId: '1E9B82A96F4D97CCE063DE21BB8B74B9',
         customerPurchaseOrderNumber: customerOrderNumber,
         shipToAccountNumber: shipTo,

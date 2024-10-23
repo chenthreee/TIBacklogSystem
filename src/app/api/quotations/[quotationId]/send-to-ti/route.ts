@@ -67,7 +67,8 @@ export async function POST(
             'components.$.tiPrice': tiComponent.tiUnitPrice,
             'components.$.tiCurrency': tiComponent.tiUnitPriceCurrencyCode,
             'components.$.moq': tiComponent.minimumOrderQuantity,
-            'components.$.nq': tiComponent.nextOrderQuantityIncrement
+            'components.$.nq': tiComponent.nextOrderQuantityIncrement,
+            'components.$.status':tiComponent.status
           }
         }
       );
