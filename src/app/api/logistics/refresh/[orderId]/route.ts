@@ -26,7 +26,9 @@ export async function GET(
     const asnAPI = new TIBacklogASN(process.env.CLIENT_ID!, process.env.CLIENT_SECRET!, process.env.SERVER_URL!)
 
     // 查询 TI ASN
+    //const tiResponse = await asnAPI.retrieveByOrderNumber(order.tiOrderNumber)
     const tiResponse = await asnAPI.retrieveByCustomerOrderNumber(order.orderNumber)
+
 
     console.log('TI ASN API 响应:', JSON.stringify(tiResponse, null, 2))
 

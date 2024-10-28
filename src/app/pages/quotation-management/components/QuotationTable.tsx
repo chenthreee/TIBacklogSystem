@@ -126,14 +126,17 @@ function QuotationTable({
                       <Search className="h-4 w-4 mr-2" />
                       查询
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteQuotation(quotation.id)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      删除
-                    </Button>
+                    {/* 删除按钮 - 暂时隐藏 */}
+                    {false && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteQuotation(quotation.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        删除
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"

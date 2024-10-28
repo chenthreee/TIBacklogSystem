@@ -55,12 +55,14 @@ export class TIBacklogASN {
   // 按订单号获取ASN
   async retrieveByOrderNumber(orderNumber: string, requestInvoicePdf = false, requestWaybillPdf = false): Promise<any> {
     const url = getEndpoint(`${this.server}/v2/backlog/advanced-shipment-notices/test?orderNumber=${orderNumber}&requestCommercialInvoicePDF=${requestInvoicePdf}&requestWaybillPDF=${requestWaybillPdf}`);
+    console.error('获取ASN的URL为:', url);
     return this.api.get(url);
   }
 
   // 按客户订单号获取ASN
   async retrieveByCustomerOrderNumber(orderNumber: string, requestInvoicePdf = true, requestWaybillPdf = false): Promise<any> {
     const url = getEndpoint(`${this.server}/v2/backlog/advanced-shipment-notices/test?customerPurchaseOrderNumber=${orderNumber}&requestCommercialInvoicePDF=${requestInvoicePdf}&requestWaybillPDF=${requestWaybillPdf}`);
+    console.error('获取ASN的URL为:', url);
     return this.api.get(url);
   }
 
