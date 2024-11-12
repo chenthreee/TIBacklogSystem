@@ -109,10 +109,23 @@ export class TIBacklogQuotes {
 
   // 添加商品到报价
   addItemToQuote(partNumber: string, quantity: number): void {
-    this.lineItems.push({
-      tiPartNumber: partNumber,
-      quantity: quantity,
-    });
+    console.log(`添加元件到报价: partNumber=${partNumber}, quantity=${quantity}`);
+    
+    if (!partNumber || partNumber.trim() === '') {
+      throw new Error('Part number cannot be empty');
+    }
+
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new Error('Quantity must be a positive integer');
+    }
+
+    const lineItem = {
+      tiPartNumber: partNumber.trim(),
+      quantity: quantity
+    };
+
+    console.log('添加的元件信息:', lineItem);
+    this.lineItems.push(lineItem);
   }
 
   // 发送报价请求
@@ -122,16 +135,47 @@ export class TIBacklogQuotes {
       return;
     }
 
+    if (!process.env.CHECKOUT_PROFILE_ID) {
+      console.error('CHECKOUT_PROFILE_ID 环境变量未设置');
+      throw new Error('CHECKOUT_PROFILE_ID environment variable is not set');
+    }
+
     const url = getEndpoint(`${this.server}/v2/backlog/quotes/test`);
     const data = {
       quote: {
         endCustomerCompanyName: 'BAIQIANCHENG SHENZHEN',
-        checkoutProfileId: '1E9B82A96F4D97CCE063DE21BB8B74B9',
+        checkoutProfileId: process.env.CHECKOUT_PROFILE_ID,
         requestedUnitPriceCurrencyCode: 'USD',
         lineItems: this.lineItems,
       },
     };
-    return this.api.post(url, data);
+
+    try {
+      console.log('=== TI API 请求信息 ===');
+      console.log('请求URL:', url);
+      console.log('请求数据:', JSON.stringify(data, null, 2));
+      console.log('使用的 CHECKOUT_PROFILE_ID:', process.env.CHECKOUT_PROFILE_ID);
+      console.log('元件列表:', this.lineItems);
+
+      const response = await this.api.post(url, data) as {
+        status: number;
+        data: any;
+      };
+      
+      console.log('=== TI API 响应信息 ===');
+      console.log('响应状态:', response.status);
+      console.log('响应数据:', JSON.stringify(response, null, 2));
+      
+      return response;
+    } catch (error: any) {
+      console.error('=== TI API 错误信息 ===');
+      console.error('错误状态码:', error.response?.status);
+      console.error('错误状态文本:', error.response?.statusText);
+      console.error('错误数据:', JSON.stringify(error.response?.data, null, 2));
+      console.error('错误详情:', error.response?.data?.errors);
+      console.error('错误消息:', error.message);
+      throw error;
+    }
   }
 
   // 获取报价

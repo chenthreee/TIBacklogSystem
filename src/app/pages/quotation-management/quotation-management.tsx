@@ -7,6 +7,10 @@ import Pagination from './components/Pagination';
 import EditComponentDialog from './components/EditComponentDialog';
 import CustomerNameDialog from './components/CustomerNameDialog';
 import AddComponentDialog from './components/AddComponentDialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 // 定义Quotation类型
 interface Quotation {
@@ -69,6 +73,8 @@ export default function QuotationManagement() {
   const { toast } = useToast()
   const [isAddComponentDialogOpen, setIsAddComponentDialogOpen] = useState(false);
   const [currentQuotationId, setCurrentQuotationId] = useState<string | null>(null);
+  const [isNewQuotationDialogOpen, setIsNewQuotationDialogOpen] = useState(false);
+  const [newQuotationCustomerName, setNewQuotationCustomerName] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -187,56 +193,97 @@ export default function QuotationManagement() {
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('handleFileUpload triggered'); // 添加日志
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet);
+      try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet);
 
-        // 处理Excel数据并创建新的报价
-        const newQuotation = {
-          id: quotations.length + 1,
-          date: new Date().toISOString().split("T")[0],
-          customer: customerName, // 使用输入的客户名称
-          components: json.map((row: any, index) => ({
-            id: index + 1,
-            name: row["元件名称"],
-            quantity: row["数量"],
-            unitPrice: row["单价"],
-            deliveryDate: row["交期"] ? new Date((row["交期"] - 25569) * 86400 * 1000).toISOString().split('T')[0] : '',
+          console.log('Excel数据:', json); // 添加日志
+
+          // 处理Excel数据并创建新的报价
+          const newQuotation = {
+            date: new Date().toISOString().split("T")[0],
+            customer: customerName, // 使用输入的客户名称
+            components: json.map((row: any, index) => ({
+              id: index + 1,
+              name: row["元件名称"],
+              quantity: row["数量"],
+              unitPrice: row["单价"],
+              deliveryDate: row["交期"] ? new Date((row["交期"] - 25569) * 86400 * 1000).toISOString().split('T')[0] : '',
+              status: "",
+            })),
+            totalAmount: json.reduce(
+              (sum: number, row: any) => sum + row["数量"] * row["单价"],
+              0
+            ),
             status: "",
-          })),
-          totalAmount: json.reduce(
-            (sum: number, row: any) => sum + row["数量"] * row["单价"],
-            0
-          ),
-          status: "",
-        };
-        //newQuotation.totalAmount = newQuotation.components.reduce((sum, c) => sum + c.quantity * c.unitPrice, 0)
+          };
 
-        setQuotations([...quotations, newQuotation]);
-        fetch("/api/quotations", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newQuotation),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            console.log("报价已成功保存到数据库:", data);
-            fetchData(); // 重新获取数据
-          })
-          .catch((error) => {
+          console.log('准备发送到服务器的数据:', newQuotation); // 添加日志
+
+          try {
+            const response = await fetch("/api/quotations", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(newQuotation),
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log("报价已成功保存到数据库:", result);
+
+            // 重新获取数据以更新列表
+            await fetchData();
+
+            // 关闭对话框并清空状态
+            setIsCustomerDialogOpen(false);
+            setCustomerName("");
+
+            toast({
+              title: "导入成功",
+              description: "Excel文件已成功导入并创建新的报价单。",
+            });
+          } catch (error) {
             console.error("保存报价时出错:", error);
+            toast({
+              title: "导入失败",
+              description: "保存报价单时发生错误，请稍后重试。",
+              variant: "destructive",
+            });
+          }
+        };
+
+        reader.onerror = (error) => {
+          console.error("读取文件时出错:", error);
+          toast({
+            title: "读取失败",
+            description: "读取Excel文件时发生错误。",
+            variant: "destructive",
           });
-      };
-      reader.readAsArrayBuffer(file);
+        };
+
+        reader.readAsArrayBuffer(file);
+      } catch (error) {
+        console.error("处理Excel文件时出错:", error);
+        toast({
+          title: "处理失败",
+          description: "处理Excel文件时发生错误。",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -246,7 +293,11 @@ export default function QuotationManagement() {
 
   const handleCustomerDialogSubmit = () => {
     setIsCustomerDialogOpen(false);
-    document.getElementById("excel-upload")?.click();
+    // 触发文件选择
+    const fileInput = document.getElementById("excel-upload") as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
   };
 
   const handleSendToTI = async (quotationId: string) => {
@@ -377,7 +428,11 @@ export default function QuotationManagement() {
     }
   };
 
-  const handleCreateNewQuotation = async () => {
+  const handleCreateNewQuotation = () => {
+    setIsNewQuotationDialogOpen(true);
+  };
+
+  const handleNewQuotationSubmit = async () => {
     try {
       const response = await fetch("/api/quotations", {
         method: "POST",
@@ -386,7 +441,7 @@ export default function QuotationManagement() {
         },
         body: JSON.stringify({
           date: new Date().toISOString().split("T")[0],
-          customer: "新客户",
+          customer: newQuotationCustomerName,
           totalAmount: 0,
           components: [],
         }),
@@ -399,6 +454,10 @@ export default function QuotationManagement() {
       const newQuotation = await response.json();
       setQuotations([...quotations, newQuotation]);
       await fetchData();
+      
+      setIsNewQuotationDialogOpen(false);
+      setNewQuotationCustomerName("");
+
       toast({
         title: "新报价已创建",
         description: "新的报价单已成功添加到列表中。",
@@ -522,6 +581,14 @@ export default function QuotationManagement() {
 
   return (
     <div className="space-y-4">
+      <input
+        type="file"
+        id="excel-upload"
+        accept=".xlsx,.xls"
+        onChange={handleFileUpload}
+        style={{ display: 'none' }}
+      />
+      
       <SearchAndImport
         searchTerm={searchTerm}
         handleSearch={handleSearch}
@@ -529,7 +596,7 @@ export default function QuotationManagement() {
         triggerFileInput={triggerFileInput}
         handleCreateNewQuotation={handleCreateNewQuotation}
       />
-
+      
       {isLoading ? (
         <div>加载中...</div>
       ) : (
@@ -565,6 +632,14 @@ export default function QuotationManagement() {
         customerName={customerName}
         setCustomerName={setCustomerName}
         handleSubmit={handleCustomerDialogSubmit}
+      />
+
+      <CustomerNameDialog
+        isOpen={isNewQuotationDialogOpen}
+        setIsOpen={setIsNewQuotationDialogOpen}
+        customerName={newQuotationCustomerName}
+        setCustomerName={setNewQuotationCustomerName}
+        handleSubmit={handleNewQuotationSubmit}
       />
 
       <AddComponentDialog
