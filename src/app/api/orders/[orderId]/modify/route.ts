@@ -13,8 +13,11 @@ export async function POST(
   const { orderId } = params
   const { components, username, localEdits } = await req.json() // 从请求体中获取组件、用户名和本地编辑信息
 
+  console.log("Received request body:", JSON.stringify(req.body));
+
   try {
     const order = await Order.findById(orderId)
+    console.log("找到的订单信息:", order ? "订单存在" : "订单不存在");
 
     if (!order) {
       return NextResponse.json({ error: '订单未找到' }, { status: 404 })
@@ -31,13 +34,18 @@ export async function POST(
     const lineItems = []
     const changeLog = [] // 用于记录变更日志
 
-    for (const component of components) {
-      const originalComponent = order.components.find((c: any) => c.id === component.id)
+    console.log("开始处理组件，组件数量:", components.length);
 
-      console.error("component id modified is : ", component.id)
+    for (const component of components) {
+      console.log("正在处理组件:", component.name);
+      const originalComponent = order.components.find((c: any) => c.id === component.id)
+      console.log("找到原始组件:", originalComponent ? "是" : "否");
+
+      console.log("component id modified is : ", component.id)
       
       // 修改 localEdit 的取值逻辑
       const localEdit = localEdits[`${orderId}-${component.id}`]
+      console.log("localEdit 信息:", localEdit);
 
       if (localEdit) {
         let logEntry = {
@@ -64,13 +72,16 @@ export async function POST(
       }
 
       // 处理所有组件，包括不需要修改的
+      console.log("开始查询报价信息，报价号:", component.quoteNumber);
       const quotation = await Quotation.findOne({
         quoteNumber: component.quoteNumber,
         'components.name': component.name,
         'components.tiPartNumber': component.tiPartNumber
       })
+      console.log("报价查询结果:", quotation ? "找到报价" : "未找到报价");
 
       if (!quotation) {
+        console.log("未找到报价，组件名称:", component.name);
         return NextResponse.json({ 
           error: '修改失败：TI报价号中无对应的元件', 
           componentName: component.name 
@@ -80,8 +91,10 @@ export async function POST(
       const matchedComponent = quotation.components.find(
         (c: any) => c.name === component.name && c.tiPartNumber === component.tiPartNumber
       )
+      console.log("匹配的组件:", matchedComponent ? "已找到" : "未找到");
 
       if (!matchedComponent) {
+        console.log("未找到匹配的组件，组件名称:", component.name);
         return NextResponse.json({ 
           error: '修改失败：TI报价号中无对应的元件', 
           componentName: component.name 
@@ -89,6 +102,14 @@ export async function POST(
       }
 
       const originalIndex = order.components.findIndex((c: any) => c.id === component.id)
+      console.log("组件在订单中的索引:", originalIndex);
+
+      // 在添加 lineItem 之前打印信息
+      console.log("准备添加 lineItem，组件信息:", {
+        partNumber: component.tiPartNumber || component.name,
+        quantity: component.quantity,
+        deliveryDate: component.deliveryDate
+      });
 
       lineItems.push({
         customerLineItemNumber: originalIndex + 1,
@@ -107,14 +128,38 @@ export async function POST(
     }
 
     console.log('准备发送到TI的lineItems:', JSON.stringify(lineItems, null, 2));
-    const response = await ordersAPI.changeOrder(
-      order.customer,
-      order.orderNumber,
-      process.env.SHIP_TO!,
-      lineItems
-    )
-
-    console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
+    try {
+        const response = await ordersAPI.changeOrder(
+            order.customer,
+            order.orderNumber,
+            process.env.SHIP_TO!,
+            lineItems
+        )
+        console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
+    } catch (apiError: any) {
+        // 详细打印 TI API 错误信息
+        console.error('TI API 错误详情:', {
+            status: apiError.response?.status,
+            statusText: apiError.response?.statusText,
+            data: apiError.response?.data,
+            headers: apiError.response?.headers,
+            config: {
+                url: apiError.config?.url,
+                method: apiError.config?.method,
+                data: apiError.config?.data
+            }
+        });
+        
+        // 将详细错误信息返回给客户端
+        return NextResponse.json({ 
+            error: '修改订单失败', 
+            details: {
+                message: apiError.response?.data?.message || apiError.message,
+                data: apiError.response?.data,
+                status: apiError.response?.status
+            }
+        }, { status: apiError.response?.status || 500 })
+    }
 
     order.status = response.orders[0].orderStatus
     order.components = order.components.map((comp: any) => {
@@ -169,8 +214,21 @@ export async function POST(
     return NextResponse.json({ success: true, order, tiResponse: response }, { status: 200 })
   } catch (error: any) {
     console.error('修改订单时出错:', error)
-    // 添加更详细的错误信息
+    // 如果是 Axios 错误，提供更详细的信息
+    if (error.isAxiosError) {
+        console.error('API 错误详情:', {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            headers: error.response?.headers
+        });
+    }
+    
     const errorMessage = error.response?.data || error.message || '未知错误';
-    return NextResponse.json({ error: '修改订单失败', details: errorMessage }, { status: 500 })
+    return NextResponse.json({ 
+        error: '修改订单失败', 
+        details: errorMessage,
+        apiResponse: error.response?.data 
+    }, { status: 500 })
   }
 }
