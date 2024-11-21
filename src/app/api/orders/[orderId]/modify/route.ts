@@ -128,14 +128,15 @@ export async function POST(
     }
 
     console.log('准备发送到TI的lineItems:', JSON.stringify(lineItems, null, 2));
+    let tiResponse; // 声明变量来存储 TI 响应
     try {
-        const response = await ordersAPI.changeOrder(
+        tiResponse = await ordersAPI.changeOrder(
             order.customer,
             order.orderNumber,
             process.env.SHIP_TO!,
             lineItems
         )
-        console.log('TI API 修改订单响应:', JSON.stringify(response, null, 2))
+        console.log('TI API 修改订单响应:', JSON.stringify(tiResponse, null, 2))
     } catch (apiError: any) {
         // 详细打印 TI API 错误信息
         console.error('TI API 错误详情:', {
@@ -161,11 +162,11 @@ export async function POST(
         }, { status: apiError.response?.status || 500 })
     }
 
-    order.status = response.orders[0].orderStatus
+    order.status = tiResponse.orders[0].orderStatus
     order.components = order.components.map((comp: any) => {
       const updatedComp = components.find((c: any) => c.id === comp.id)
       if (updatedComp) {
-        const tiLineItem = response.orders[0].lineItems.find((li: any) => li.tiPartNumber === updatedComp.tiPartNumber || li.tiPartNumber === updatedComp.name)
+        const tiLineItem = tiResponse.orders[0].lineItems.find((li: any) => li.tiPartNumber === updatedComp.tiPartNumber || li.tiPartNumber === updatedComp.name)
         if (tiLineItem) {
           const newComp = {
             ...comp,
@@ -211,7 +212,11 @@ export async function POST(
 
     await order.save()
 
-    return NextResponse.json({ success: true, order, tiResponse: response }, { status: 200 })
+    return NextResponse.json({ 
+        success: true, 
+        order, 
+        tiResponse: tiResponse 
+    }, { status: 200 })
   } catch (error: any) {
     console.error('修改订单时出错:', error)
     // 如果是 Axios 错误，提供更详细的信息
