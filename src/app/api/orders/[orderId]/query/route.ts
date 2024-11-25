@@ -12,56 +12,118 @@ export async function GET(
   const { orderId } = params
 
   try {
+    console.log('=== 开始查询订单 ===')
+    console.log('订单ID:', orderId)
+    
     const order = await Order.findById(orderId)
 
     if (!order) {
+      console.error('订单未找到，订单ID:', orderId)
       return NextResponse.json({ error: '订单未找到' }, { status: 404 })
     }
 
     if (!order.tiOrderNumber) {
+      console.error('订单尚未提交到TI，订单号:', order.orderNumber)
       return NextResponse.json({ error: '该订单尚未提交到 TI' }, { status: 400 })
     }
 
+    console.log('查询订单信息:', JSON.stringify({
+      orderNumber: order.orderNumber,
+      customer: order.customer,
+      tiOrderNumber: order.tiOrderNumber
+    }, null, 2))
+
     const ordersAPI = new TIBacklogOrders(process.env.CLIENT_ID!, process.env.CLIENT_SECRET!, process.env.SERVER_URL!)
 
-    const tiResponse = await ordersAPI.retrieveOrderByCustomerNumber(order.orderNumber)
-    console.log('TI API 响应:', JSON.stringify(tiResponse, null, 2))
+    try {
+      console.log('=== 发送查询请求到 TI ===')
+      const tiResponse = await ordersAPI.retrieveOrderByCustomerNumber(order.orderNumber)
+      console.log('TI API 响应:', JSON.stringify(tiResponse, null, 2))
 
-    order.status = tiResponse.orders[0].orderStatus
-    order.components = order.components.map((comp: any) => {
-      const tiLineItem = tiResponse.orders[0].lineItems.find((li: any) => 
-        li.tiPartNumber.trim().toLowerCase() === comp.name.trim().toLowerCase()
-      )
-      if (tiLineItem) {
-        comp.status = tiLineItem.status
-        comp.quantity = tiLineItem.tiTotalOrderItemQuantity
-        comp.unitPrice = tiLineItem.customerAnticipatedUnitPrice
-        comp.tiLineItemNumber = tiLineItem.tiLineItemNumber
-        comp.name = tiLineItem.tiPartNumber.trim() // 更新组件名称，去除多余的空格
-        
-        if (tiLineItem.schedules && tiLineItem.schedules[0] && tiLineItem.schedules[0].confirmations) {
-          comp.confirmations = tiLineItem.schedules[0].confirmations.map((conf: any) => ({
-            tiScheduleLineNumber: conf.tiScheduleLineNumber,
-            scheduledQuantity: conf.scheduledQuantity,
-            estimatedShipDate: conf.estimatedShipDate,
-            estimatedDeliveryDate: conf.estimatedDeliveryDate,
-            estimatedDeliveryDateStatus: conf.estimatedDeliveryDateStatus,
-            shippedQuantity: conf.shippedQuantity,
-            customerRequestedShipDate: conf.customerRequestedShipDate
-          }))
-        } else {
-          comp.confirmations = []
-        }
+      if (!tiResponse.orders || !tiResponse.orders[0]) {
+        console.error('TI返回的响应格式异常:', JSON.stringify(tiResponse, null, 2))
+        throw new Error('TI返回的响应格式异常')
       }
-      return comp
-    })
-    
-    console.log('更新后的订单:', JSON.stringify(order, null, 2))
-    await order.save()
 
-    return NextResponse.json({ success: true, order, tiResponse }, { status: 200 })
-  } catch (error) {
-    console.error('查询订单时出错:', error)
-    return NextResponse.json({ error: '查询订单失败' }, { status: 500 })
+      order.status = tiResponse.orders[0].orderStatus
+      
+      console.log('=== 更新组件状态 ===')
+      order.components = order.components.map((comp: any) => {
+        const tiLineItem = tiResponse.orders[0].lineItems.find((li: any) => 
+          li.tiPartNumber.trim().toLowerCase() === comp.name.trim().toLowerCase()
+        )
+        if (tiLineItem) {
+          console.log('更新组件:', JSON.stringify({
+            name: comp.name,
+            status: tiLineItem.status,
+            quantity: tiLineItem.tiTotalOrderItemQuantity
+          }, null, 2))
+          
+          comp.status = tiLineItem.status
+          comp.quantity = tiLineItem.tiTotalOrderItemQuantity
+          comp.unitPrice = tiLineItem.customerAnticipatedUnitPrice
+          comp.tiLineItemNumber = tiLineItem.tiLineItemNumber
+          comp.name = tiLineItem.tiPartNumber.trim()
+          
+          if (tiLineItem.schedules && tiLineItem.schedules[0] && tiLineItem.schedules[0].confirmations) {
+            comp.confirmations = tiLineItem.schedules[0].confirmations.map((conf: any) => ({
+              tiScheduleLineNumber: conf.tiScheduleLineNumber,
+              scheduledQuantity: conf.scheduledQuantity,
+              estimatedShipDate: conf.estimatedShipDate,
+              estimatedDeliveryDate: conf.estimatedDeliveryDate,
+              estimatedDeliveryDateStatus: conf.estimatedDeliveryDateStatus,
+              shippedQuantity: conf.shippedQuantity,
+              customerRequestedShipDate: conf.customerRequestedShipDate
+            }))
+          } else {
+            comp.confirmations = []
+          }
+        } else {
+          console.warn('未找到匹配的组件:', JSON.stringify({
+            componentName: comp.name
+          }, null, 2))
+        }
+        return comp
+      })
+      
+      console.log('保存更新后的订单')
+      await order.save()
+
+      return NextResponse.json({ success: true, order, tiResponse }, { status: 200 })
+    } catch (error: any) {
+      console.error('=== TI API 调用失败 ===')
+      console.error('错误信息:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        errors: error.response?.data?.errors
+      })
+      
+      // 详细打印错误数组
+      if (error.response?.data?.errors) {
+        console.error('TI 返回的错误详情:', JSON.stringify(error.response.data.errors, null, 2))
+      }
+      
+      throw error
+    }
+  } catch (error: any) {
+    console.error("=== 查询订单失败 ===")
+    console.error('错误详情:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data,
+      errors: error.response?.data?.errors
+    })
+
+    // 同样在外层 catch 中也详细打印
+    if (error.response?.data?.errors) {
+      console.error('完整的错误信息:', JSON.stringify(error.response.data.errors, null, 2))
+    }
+
+    return NextResponse.json({ 
+      error: '查询订单失败',
+      details: error.response?.data?.errors || error.message,
+      tiErrors: error.response?.data?.errors || []
+    }, { status: error.response?.status || 500 })
   }
 }
