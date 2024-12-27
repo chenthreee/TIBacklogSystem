@@ -96,6 +96,7 @@ export default function OrderManagement() {
   const [localEditedComponents, setLocalEditedComponents] = useState<{[key: string]: Component}>({})
   const [orderStatus, setOrderStatus] = useState<string>("all")
   const [componentStatus, setComponentStatus] = useState<string>("all")
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -761,6 +762,53 @@ export default function OrderManagement() {
     return buf;
   }
 
+  const handleBatchQuery = async () => {
+    setIsRefreshing(true);
+    try {
+      // 创建一个进度计数器
+      let progress = 0;
+      const total = orders.length;
+
+      // 使用 Promise.all 并发查询所有订单
+      await Promise.all(
+        orders.map(async (order) => {
+          try {
+            const response = await fetch(`/api/orders/${order._id}/query`);
+            if (!response.ok) {
+              throw new Error(`订单 ${order.orderNumber} 查询失败`);
+            }
+            const data = await response.json();
+            
+            // 更新本地订单数据
+            setOrders(prev => prev.map(o => 
+              o._id === order._id ? data.order : o
+            ));
+
+            // 更新进度
+            progress++;
+            console.log(`进度: ${progress}/${total}`);
+          } catch (error) {
+            console.error(`查询订单 ${order.orderNumber} 时出错:`, error);
+          }
+        })
+      );
+
+      toast({
+        title: "刷新完成",
+        description: "所有订单已更新",
+      });
+    } catch (error) {
+      console.error('批量查询订单时出错:', error);
+      toast({
+        title: "刷新失败",
+        description: "批量查询订单时出错",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -838,6 +886,8 @@ export default function OrderManagement() {
             handleUpdatePurchaseOrderNumber={handleUpdatePurchaseOrderNumber}
             handleAddComponent={handleAddComponent}
             handleExportOrders={handleExportOrders}
+            handleBatchQuery={handleBatchQuery}
+            isRefreshing={isRefreshing}
           />
         </div>
       )}
