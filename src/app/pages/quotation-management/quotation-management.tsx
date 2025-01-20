@@ -75,6 +75,7 @@ export default function QuotationManagement() {
   const [currentQuotationId, setCurrentQuotationId] = useState<string | null>(null);
   const [isNewQuotationDialogOpen, setIsNewQuotationDialogOpen] = useState(false);
   const [newQuotationCustomerName, setNewQuotationCustomerName] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -579,6 +580,61 @@ export default function QuotationManagement() {
     return buf;
   }
 
+  const handleBatchQuery = async () => {
+    setIsRefreshing(true);
+    try {
+      // 创建一个进度计数器
+      let progress = 0;
+      const total = quotations.length;
+
+      // 使用 Promise.all 并发查询所有报价单
+      await Promise.all(
+        quotations.map(async (quotation) => {
+          try {
+            const response = await fetch(`/api/quotations/${quotation.id}/query`);
+            if (!response.ok) {
+              throw new Error(`报价单 ${quotation.quoteNumber} 查询失败`);
+            }
+            const data = await response.json();
+            
+            // 更新本地报价单数据
+            setQuotations(prev => prev.map(q => 
+              q.id === quotation.id ? {
+                ...q,
+                ...data.quotation,
+                components: data.quotation.components.map((comp: any) => ({
+                  ...comp,
+                  moq: comp.moq,
+                  nq: comp.nq
+                }))
+              } : q
+            ));
+
+            // 更新进度
+            progress++;
+            console.log(`进度: ${progress}/${total}`);
+          } catch (error) {
+            console.error(`查询报价单 ${quotation.quoteNumber} 时出错:`, error);
+          }
+        })
+      );
+
+      toast({
+        title: "刷新完成",
+        description: "所有报价单已更新",
+      });
+    } catch (error) {
+      console.error('批量查询报价单时出错:', error);
+      toast({
+        title: "刷新失败",
+        description: "批量查询报价单时出错",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <input
@@ -611,6 +667,8 @@ export default function QuotationManagement() {
           handleDeleteComponent={handleDeleteComponent}
           handleAddComponent={handleAddComponent}
           handleExportQuotations={handleExportQuotations}
+          handleBatchQuery={handleBatchQuery}
+          isRefreshing={isRefreshing}
         />
       )}
 
