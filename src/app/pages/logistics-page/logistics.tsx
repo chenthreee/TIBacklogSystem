@@ -55,6 +55,7 @@ export default function LogisticsInformation() {
   const [totalPages, setTotalPages] = useState(1)
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -94,43 +95,58 @@ export default function LogisticsInformation() {
     return URL.createObjectURL(blob);
   }, []);
 
-  const handleRefresh = async (orderId: string) => {
+  const handleBatchRefresh = async () => {
+    setIsRefreshing(true);
     try {
-      const response = await fetch(`/api/logistics/refresh/${orderId}`);
-      if (!response.ok) {
-        throw new Error('刷新物流信息失败');
-      }
-      const data = await response.json();
-      console.log('TI ASN API 完整响应:', data.tiResponse);
+      let progress = 0;
+      const total = logisticsInfo.length;
 
-      // 更新本地状态
-      setLogisticsInfo(prevInfo => prevInfo.map(info => 
-        info.orderId === orderId
-          ? {
-              ...info,
-              components: data.components.map((component: LogisticsComponent) => ({
-                ...component,
-                commercialInvoicePDF: component.commercialInvoicePDF 
-                  ? createBlobUrl(component.commercialInvoicePDF)
-                  : undefined
-              }))
+      await Promise.all(
+        logisticsInfo.map(async (info) => {
+          try {
+            const response = await fetch(`/api/logistics/refresh/${info.orderId}`);
+            if (!response.ok) {
+              throw new Error(`订单 ${info.orderId} 查询失败`);
             }
-          : info
-      ));
+            const data = await response.json();
+            
+            setLogisticsInfo(prevInfo => prevInfo.map(item => 
+              item.orderId === info.orderId
+                ? {
+                    ...item,
+                    components: data.components.map((component: LogisticsComponent) => ({
+                      ...component,
+                      commercialInvoicePDF: component.commercialInvoicePDF 
+                        ? createBlobUrl(component.commercialInvoicePDF)
+                        : undefined
+                    }))
+                  }
+                : item
+            ));
+
+            progress++;
+            console.log(`进度: ${progress}/${total}`);
+          } catch (error) {
+            console.error(`查询订单 ${info.orderId} 时出错:`, error);
+          }
+        })
+      );
 
       toast({
-        title: "刷新成功",
-        description: `订单 ${orderId} 的物流信息已更新。`,
+        title: "刷新完成",
+        description: "所有物流信息已更新",
       });
     } catch (error) {
-      console.error('刷新物流信息时出错:', error);
+      console.error('批量查询物流信息时出错:', error);
       toast({
-        title: "错误",
-        description: "刷新物流信息失败，请稍后重试。",
+        title: "刷新失败",
+        description: "批量查询物流信息时出错",
         variant: "destructive",
       });
+    } finally {
+      setIsRefreshing(false);
     }
-  }
+  };
 
   const handleReadAll = () => {
     toast({
@@ -142,13 +158,45 @@ export default function LogisticsInformation() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <Input
-          type="text"
-          placeholder="搜索PO号、TI订单号或客户名称..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="max-w-sm"
-        />
+        <div className="flex items-center space-x-4">
+          <Input
+            type="text"
+            placeholder="搜索PO号、TI订单号或客户名称..."
+            value={searchTerm}
+            onChange={handleSearch}
+            className="max-w-sm"
+          />
+          <Button 
+            onClick={handleBatchRefresh} 
+            disabled={isRefreshing}
+            variant="outline"
+          >
+            {isRefreshing ? (
+              <>
+                <span className="animate-spin mr-2">⌛</span>
+                刷新中...
+              </>
+            ) : (
+              <>
+                <svg
+                  className="mr-2 h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                一键刷新
+              </>
+            )}
+          </Button>
+        </div>
         <Button onClick={handleReadAll}>
           读取
         </Button>
@@ -235,7 +283,7 @@ export default function LogisticsInformation() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleRefresh(info.orderId)}
+                      onClick={() => handleBatchRefresh()}
                     >
                       <RefreshCw className="h-4 w-4 mr-2" />
                       刷新
