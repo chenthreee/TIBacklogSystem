@@ -108,7 +108,7 @@ export async function POST(
       const originalIndex = order.components.findIndex((c: any) => 
         c.id === component.id && c.tiLineItemNumber === component.tiLineItemNumber
       );
-      console.log("组件在订单中的索引:", originalIndex);
+      console.log("组件在订单中的索引:", originalIndex);//完成板本
 
       // 在添加 lineItem 之前打印信息
       console.log("准备添加 lineItem，组件信息:", {
