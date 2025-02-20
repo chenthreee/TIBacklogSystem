@@ -114,7 +114,7 @@ export async function POST(
       console.log("准备添加 lineItem，组件信息:", {
         partNumber: component.tiPartNumber || component.name,
         quantity: component.quantity,
-        deliveryDate: component.deliveryDate
+        deliveryDate: localEdit ? localEdit.deliveryDate : component.deliveryDate
       });
 
       lineItems.push({
@@ -126,8 +126,9 @@ export async function POST(
         quoteNumber: component.quoteNumber,
         schedules: [
           {
-            requestedQuantity: parseInt(component.quantity),
-            requestedDeliveryDate: new Date(component.deliveryDate).toISOString().split('T')[0],
+            requestedQuantity: parseInt(localEdit ? localEdit.quantity : component.quantity),
+            requestedDeliveryDate: new Date(localEdit ? localEdit.deliveryDate : component.deliveryDate)
+              .toISOString().split('T')[0],
           },
         ],
       })
@@ -170,45 +171,45 @@ export async function POST(
 
     order.status = tiResponse.orders[0].orderStatus
     order.components = order.components.map((comp: any) => {
-      const updatedComp = components.find((c: any) => c.id === comp.id)
-      if (updatedComp) {
-        const tiLineItem = tiResponse.orders[0].lineItems.find((li: any) => li.tiPartNumber === updatedComp.tiPartNumber || li.tiPartNumber === updatedComp.name)
-        if (tiLineItem) {
-          const newComp = {
-            ...comp,
-            ...updatedComp,
-            status: updatedComp.lineItemChangeIndicator === 'X' ? 'deleted' : tiLineItem.status,
-            tiLineItemNumber: tiLineItem.tiLineItemNumber,
-            quantity: tiLineItem.schedules[0].requestedQuantity,
-            deliveryDate: tiLineItem.schedules[0].requestedDeliveryDate,
-            quoteNumber: tiLineItem.quoteNumber,
-            moq: updatedComp.moq, // 添加 MOQ
-            nq: updatedComp.nq,   // 添加 NQ
-          }
-          // 只有在存在确认信息时才更新
-          if (tiLineItem.schedules[0]?.confirmations) {
-            newComp.confirmations = tiLineItem.schedules[0].confirmations.map((conf: any) => ({
-              tiScheduleLineNumber: conf.tiScheduleLineNumber,
-              scheduledQuantity: conf.scheduledQuantity,
-              estimatedShipDate: conf.estimatedShipDate,
-              estimatedDeliveryDate: conf.estimatedDeliveryDate,
-              estimatedDeliveryDateStatus: conf.estimatedDeliveryDateStatus,
-              shippedQuantity: conf.shippedQuantity,
-              customerRequestedShipDate: conf.customerRequestedShipDate
-            }))
-          }
-          return newComp
-        }
-        return { ...comp, ...updatedComp, status: updatedComp.lineItemChangeIndicator === 'X' ? 'deleted' : comp.status }
+      // 使用 tiLineItemNumber 来匹配正确的组件
+      const tiLineItem = tiResponse.orders[0].lineItems.find((li: any) => 
+        li.tiLineItemNumber === comp.tiLineItemNumber && 
+        (li.tiPartNumber === comp.name || li.tiPartNumber === comp.tiPartNumber)
+      );
+
+      if (tiLineItem) {
+        console.log('匹配到TI响应中的组件:', {
+          name: comp.name,
+          originalTiLineNumber: comp.tiLineItemNumber,
+          responseTiLineNumber: tiLineItem.tiLineItemNumber
+        });
+
+        return {
+          ...comp,
+          status: tiLineItem.status,
+          tiLineItemNumber: tiLineItem.tiLineItemNumber, // 保持原有的 tiLineItemNumber
+          quantity: tiLineItem.schedules[0].requestedQuantity,
+          deliveryDate: tiLineItem.schedules[0].requestedDeliveryDate,
+          quoteNumber: tiLineItem.quoteNumber,
+          confirmations: tiLineItem.schedules[0]?.confirmations?.map((conf: any) => ({
+            tiScheduleLineNumber: conf.tiScheduleLineNumber,
+            scheduledQuantity: conf.scheduledQuantity,
+            estimatedShipDate: conf.estimatedShipDate,
+            estimatedDeliveryDate: conf.estimatedDeliveryDate,
+            estimatedDeliveryDateStatus: conf.estimatedDeliveryDateStatus,
+            shippedQuantity: conf.shippedQuantity,
+            customerRequestedShipDate: conf.customerRequestedShipDate
+          })) || []
+        };
       }
-      return comp
-    })
+      return comp;
+    });
 
     order.totalAmount = order.components.reduce((sum: number, comp: any) => {
       return comp.status !== 'deleted' ? sum + (comp.quantity * comp.unitPrice) : sum
     }, 0)
 
-    // 添加 API 调用日志，包含用户名和详细的变更记录
+    // 添加 API 调用日志
     order.apiLogs.push({
       operationType: 'modify',
       timestamp: new Date(),
