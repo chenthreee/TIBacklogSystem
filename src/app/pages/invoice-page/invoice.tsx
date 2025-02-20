@@ -49,6 +49,7 @@ export default function FinancialInvoice() {
   const [totalPages, setTotalPages] = useState(1)
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const { toast } = useToast()
 
   const createBlobUrl = useCallback((base64Data: string) => {
@@ -92,34 +93,51 @@ export default function FinancialInvoice() {
     setCurrentPage(1)
   }
 
-  const handleRefresh = async (orderId: string) => {
+  const handleBatchRefresh = async () => {
+    setIsRefreshing(true);
     try {
-      const response = await fetch(`/api/invoices/query?orderNumber=${orderId}`);
-      if (!response.ok) {
-        throw new Error('发票刷新失败');
-      }
-      const data = await response.json();
+      let progress = 0;
+      const total = invoiceInfo.length;
 
-      setInvoiceInfo(prevInfo => prevInfo.map(info => 
-        info.orderId === orderId 
-          ? { 
-              ...info, 
-              pdfUrl: data.pdfUrl ? createBlobUrl(data.pdfUrl.split(',')[1]) : undefined
+      await Promise.all(
+        invoiceInfo.map(async (info) => {
+          try {
+            const response = await fetch(`/api/invoices/query?orderNumber=${info.orderId}`);
+            if (!response.ok) {
+              throw new Error(`订单 ${info.orderId} 查询失败`);
             }
-          : info
-      ));
+            const data = await response.json();
+            
+            setInvoiceInfo(prevInfo => prevInfo.map(item => 
+              item.orderId === info.orderId
+                ? { 
+                    ...item, 
+                    pdfUrl: data.pdfUrl ? createBlobUrl(data.pdfUrl.split(',')[1]) : undefined
+                  }
+                : item
+            ));
+
+            progress++;
+            console.log(`进度: ${progress}/${total}`);
+          } catch (error) {
+            console.error(`查询订单 ${info.orderId} 时出错:`, error);
+          }
+        })
+      );
 
       toast({
-        title: "刷新成功",
-        description: `订单 ${orderId} 的发票信息已更新。`,
+        title: "刷新完成",
+        description: "所有发票信息已更新",
       });
     } catch (error) {
-      console.error('刷新发票时出错:', error);
+      console.error('批量查询发票信息时出错:', error);
       toast({
         title: "刷新失败",
-        description: `无法更新订单 ${orderId} 的发票信息。`,
+        description: "批量查询发票信息时出错",
         variant: "destructive",
       });
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -144,13 +162,45 @@ export default function FinancialInvoice() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <Input
-          type="text"
-          placeholder="搜索PO号或客户名称..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="max-w-sm"
-        />
+        <div className="flex items-center space-x-4">
+          <Input
+            type="text"
+            placeholder="搜索PO号或客户名称..."
+            value={searchTerm}
+            onChange={handleSearch}
+            className="max-w-sm"
+          />
+          <Button 
+            onClick={handleBatchRefresh} 
+            disabled={isRefreshing}
+            variant="outline"
+          >
+            {isRefreshing ? (
+              <>
+                <span className="animate-spin mr-2">⌛</span>
+                刷新中...
+              </>
+            ) : (
+              <>
+                <svg
+                  className="mr-2 h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                一键刷新
+              </>
+            )}
+          </Button>
+        </div>
         <Button onClick={handleReadAll}>
           读取
         </Button>
@@ -217,20 +267,12 @@ export default function FinancialInvoice() {
                     </Dialog>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRefresh(info.orderId)}
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      刷新
-                    </Button>
                     {info.pdfUrl && (
                       <a
                         href={info.pdfUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="ml-2 flex items-center text-blue-600 hover:text-blue-800"
+                        className="flex items-center text-blue-600 hover:text-blue-800"
                       >
                         <FileText className="h-4 w-4 mr-1" />
                         查看 PDF
