@@ -38,13 +38,17 @@ export async function POST(
 
     for (const component of components) {
       console.log("正在处理组件:", component.name);
-      const originalComponent = order.components.find((c: any) => c.id === component.id)
+      const originalComponent = order.components.find((c: any) => 
+        c.id === component.id && c.tiLineItemNumber === component.tiLineItemNumber
+      );
       console.log("找到原始组件:", originalComponent ? "是" : "否");
 
-      console.log("component id modified is : ", component.id)
+      console.log("component id modified is : ", component.id);
+      console.log("component tiLineItemNumber is : ", component.tiLineItemNumber);
       
       // 修改 localEdit 的取值逻辑
-      const localEdit = localEdits[`${orderId}-${component.id}`]
+      const componentKey = `${orderId}-${component.id}-${component.tiLineItemNumber}`;
+      const localEdit = localEdits[componentKey];
       console.log("localEdit 信息:", localEdit);
 
       if (localEdit) {
@@ -101,7 +105,9 @@ export async function POST(
         }, { status: 400 })
       }
 
-      const originalIndex = order.components.findIndex((c: any) => c.id === component.id)
+      const originalIndex = order.components.findIndex((c: any) => 
+        c.id === component.id && c.tiLineItemNumber === component.tiLineItemNumber
+      );
       console.log("组件在订单中的索引:", originalIndex);
 
       // 在添加 lineItem 之前打印信息
