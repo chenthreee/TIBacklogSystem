@@ -156,7 +156,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
   // 修改计算订单实际总金额的函数
   const calculateActualTotal = (order: Order) => {
     return order.components.reduce((sum, component) => {
-      const localEdit = localEditedComponents[`${order._id}-${component.id}`];
+      const componentKey = `${order._id}-${component.id}-${component.tiLineItemNumber}`;
+      const localEdit = localEditedComponents[componentKey];
       const displayComponent = localEdit || component;
       const isDeleted = displayComponent.status === 'deleted';
       const quantity = displayComponent.quantity || 0;
@@ -169,7 +170,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
     setIsCheckingQuantities(true);
     const results: { [key: string]: boolean } = {};
     order.components.forEach((component) => {
-      const localEdit = localEditedComponents[`${order._id}-${component.id}`];
+      const componentKey = `${order._id}-${component.id}-${component.tiLineItemNumber}`;
+      const localEdit = localEditedComponents[componentKey];
       const displayComponent = localEdit || component;
       
       const quantity = displayComponent.quantity;
@@ -461,7 +463,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       </TableHeader>
                       <TableBody>
                         {order.components.map((component, index) => {
-                          const localEdit = localEditedComponents[`${order._id}-${component.id}`];
+                          const componentKey = `${order._id}-${component.id}-${component.tiLineItemNumber}`;
+                          const localEdit = localEditedComponents[componentKey];
                           const displayComponent = localEdit || component;
                           const isDeleted = displayComponent.status === 'deleted';
                           const quantity = displayComponent.quantity || 0;

@@ -189,7 +189,9 @@ export default function OrderManagement() {
           ? {
               ...order,
               components: order.components.map(comp => 
-                comp.id === updatedComponent.id ? updatedComponent : comp
+                comp.id === updatedComponent.id && comp.tiLineItemNumber === updatedComponent.tiLineItemNumber 
+                  ? updatedComponent 
+                  : comp
               )
             }
           : order
@@ -199,10 +201,11 @@ export default function OrderManagement() {
         description: "组件信息已直接更新到数据库。",
       });
     } else {
-      // 原有的本地更新逻辑
+      // 使用组合键（orderId + componentId + tiLineItemNumber）作为唯一标识符
+      const componentKey = `${editedComponent.orderId}-${editedComponent.id}-${editedComponent.tiLineItemNumber}`;
       setLocalEditedComponents(prev => ({
         ...prev,
-        [`${editedComponent.orderId}-${editedComponent.id}`]: updatedComponent
+        [componentKey]: updatedComponent
       }));
       toast({
         title: "组件已临时更新",
