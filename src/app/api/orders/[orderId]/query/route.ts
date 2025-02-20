@@ -50,11 +50,13 @@ export async function GET(
       console.log('=== 更新组件状态 ===')
       order.components = order.components.map((comp: any) => {
         const tiLineItem = tiResponse.orders[0].lineItems.find((li: any) => 
-          li.tiPartNumber.trim().toLowerCase() === comp.name.trim().toLowerCase()
+          li.tiPartNumber.trim().toLowerCase() === comp.name.trim().toLowerCase() &&
+          li.tiLineItemNumber === comp.tiLineItemNumber
         )
         if (tiLineItem) {
           console.log('更新组件:', JSON.stringify({
             name: comp.name,
+            tiLineItemNumber: comp.tiLineItemNumber,
             status: tiLineItem.status,
             quantity: tiLineItem.tiTotalOrderItemQuantity
           }, null, 2))
