@@ -158,14 +158,14 @@ export default function LogisticsInformation() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-6 w-auto">
           <Input
             type="text"
             placeholder="搜索PO号、TI订单号或客户名称..."
             value={searchTerm}
             onChange={handleSearch}
             //className="max-w-sm"
-            className="flex-grow w-full max-w-lg px-4 py-2"
+            className="flex-grow w-auto min-w-[250px] max-w-[450px] px-4 py-2"
           />
           <Button 
             onClick={handleBatchRefresh} 
