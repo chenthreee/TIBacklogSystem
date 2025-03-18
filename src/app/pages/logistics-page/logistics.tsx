@@ -164,7 +164,8 @@ export default function LogisticsInformation() {
             placeholder="搜索PO号、TI订单号或客户名称..."
             value={searchTerm}
             onChange={handleSearch}
-            className="max-w-sm"
+            //className="max-w-sm"
+            className="flex-grow w-full max-w-lg px-4 py-2"
           />
           <Button 
             onClick={handleBatchRefresh} 
