@@ -817,7 +817,7 @@ export default function OrderManagement() {
       <div className="flex justify-between items-center">
         <Input
           type="text"
-          placeholder="搜索PO号、TI订单号或客户名称..."
+          placeholder="搜索PO号、TI订单号、客户名称或元件名称..."
           value={searchTerm}
           onChange={handleSearch}
           className="max-w-sm"

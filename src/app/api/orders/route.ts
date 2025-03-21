@@ -19,7 +19,8 @@ export async function GET(req: NextRequest) {
     query.$or = [
       { purchaseOrderNumber: { $regex: searchTerm, $options: 'i' } },
       { tiOrderNumber: { $regex: searchTerm, $options: 'i' } },
-      { customer: { $regex: searchTerm, $options: 'i' } }
+      { customer: { $regex: searchTerm, $options: 'i' } },
+      { 'components.name': { $regex: searchTerm, $options: 'i' } }
     ]
   }
 
