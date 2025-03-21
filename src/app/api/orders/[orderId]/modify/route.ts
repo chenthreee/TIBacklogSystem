@@ -11,7 +11,7 @@ export async function POST(
   await dbConnect()
 
   const { orderId } = params
-  const { components, username, localEdits } = await req.json() // 从请求体中获取组件、用户名和本地编辑信息
+  const { components, username, localEdits } = await req.json() // 从请求体中获取组件、用户名和本地编辑的信息
 
   console.log("Received request body:", JSON.stringify(req.body));
 
