@@ -48,44 +48,39 @@ export async function GET(
       order.status = tiResponse.orders[0].orderStatus
       
       console.log('=== 更新组件状态 ===')
-      // order.components = order.components.map((comp: any) => {
-      //   const tiLineItem = tiResponse.orders[0].lineItems.find((li: any) => 
-      //     li.tiPartNumber.trim().toLowerCase() === comp.name.trim().toLowerCase() &&
-      //     li.tiLineItemNumber === comp.tiLineItemNumber
-      //   )
-
-      
       order.components = order.components.map((comp: any) => {
-        // 使用 filter 而不是 find，获取所有可能的匹配项
-        const matchingItems = tiResponse.orders[0].lineItems.filter((li: any) => 
-          li.tiLineItemNumber === comp.tiLineItemNumber
-        );
+        // 在所有订单中查找匹配项
+        const allLineItems = tiResponse.orders.flatMap((order: any) => order.lineItems);
         
         // 添加调试日志
-        console.log('匹配的行项目:', JSON.stringify({
-          componentName: comp.name,
+        console.log('正在查找组件:', JSON.stringify({
+          name: comp.name,
           tiLineItemNumber: comp.tiLineItemNumber,
-          matchingItems: matchingItems.map((item: any) => ({
+          allItems: allLineItems.map((item :any)  => ({
             tiPartNumber: item.tiPartNumber,
             tiLineItemNumber: item.tiLineItemNumber
           }))
         }, null, 2));
 
-        // 在匹配的项中查找，忽略大小写，并移除所有空格
-        const exactMatch = matchingItems.find((li: any) => {
-          const normalizedTiPart = li.tiPartNumber.replace(/\s+/g, '').toLowerCase();
-          const normalizedCompName = comp.name.replace(/\s+/g, '').toLowerCase();
-          
-          console.log('比较:', {
-            normalizedTiPart,
-            normalizedCompName,
-            isMatch: normalizedTiPart === normalizedCompName
-          });
-          
-          return normalizedTiPart === normalizedCompName;
+        // 先尝试通过零件号和tiLineItemNumber同时匹配
+        let exactMatch = allLineItems.find((li: any) => {
+          const normalizedTiPart = li.tiPartNumber.trim().toLowerCase();
+          const normalizedCompName = comp.name.trim().toLowerCase();
+          return normalizedTiPart === normalizedCompName && 
+                 li.tiLineItemNumber === comp.tiLineItemNumber;
         });
+
+        // 如果找不到完全匹配，则只通过零件号匹配
+        if (!exactMatch) {
+          console.log('未找到完全匹配，尝试仅通过零件号匹配');
+          exactMatch = allLineItems.find((li: any) => {
+            const normalizedTiPart = li.tiPartNumber.trim().toLowerCase();
+            const normalizedCompName = comp.name.trim().toLowerCase();
+            return normalizedTiPart === normalizedCompName;
+          });
+        }
         
-        // 使用完全匹配的项，如果找到的话
+        // 使用匹配的项，如果找到的话
         const tiLineItem = exactMatch || null;
 
         if (tiLineItem) {
