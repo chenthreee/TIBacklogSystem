@@ -61,10 +61,29 @@ export async function GET(
           li.tiLineItemNumber === comp.tiLineItemNumber
         );
         
-        // 在匹配的项中再查找完全匹配的（包括 partNumber）
-        const exactMatch = matchingItems.find((li: any) => 
-          li.tiPartNumber.trim().toLowerCase() === comp.name.trim().toLowerCase()
-        );
+        // 添加调试日志
+        console.log('匹配的行项目:', JSON.stringify({
+          componentName: comp.name,
+          tiLineItemNumber: comp.tiLineItemNumber,
+          matchingItems: matchingItems.map((item: any) => ({
+            tiPartNumber: item.tiPartNumber,
+            tiLineItemNumber: item.tiLineItemNumber
+          }))
+        }, null, 2));
+
+        // 在匹配的项中查找，忽略大小写，并移除所有空格
+        const exactMatch = matchingItems.find((li: any) => {
+          const normalizedTiPart = li.tiPartNumber.replace(/\s+/g, '').toLowerCase();
+          const normalizedCompName = comp.name.replace(/\s+/g, '').toLowerCase();
+          
+          console.log('比较:', {
+            normalizedTiPart,
+            normalizedCompName,
+            isMatch: normalizedTiPart === normalizedCompName
+          });
+          
+          return normalizedTiPart === normalizedCompName;
+        });
         
         // 使用完全匹配的项，如果找到的话
         const tiLineItem = exactMatch || null;
