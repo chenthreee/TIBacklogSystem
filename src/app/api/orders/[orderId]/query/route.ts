@@ -48,11 +48,27 @@ export async function GET(
       order.status = tiResponse.orders[0].orderStatus
       
       console.log('=== 更新组件状态 ===')
+      // order.components = order.components.map((comp: any) => {
+      //   const tiLineItem = tiResponse.orders[0].lineItems.find((li: any) => 
+      //     li.tiPartNumber.trim().toLowerCase() === comp.name.trim().toLowerCase() &&
+      //     li.tiLineItemNumber === comp.tiLineItemNumber
+      //   )
+
+      
       order.components = order.components.map((comp: any) => {
-        const tiLineItem = tiResponse.orders[0].lineItems.find((li: any) => 
-          li.tiPartNumber.trim().toLowerCase() === comp.name.trim().toLowerCase() &&
+        // 使用 filter 而不是 find，获取所有可能的匹配项
+        const matchingItems = tiResponse.orders[0].lineItems.filter((li: any) => 
           li.tiLineItemNumber === comp.tiLineItemNumber
-        )
+        );
+        
+        // 在匹配的项中再查找完全匹配的（包括 partNumber）
+        const exactMatch = matchingItems.find((li: any) => 
+          li.tiPartNumber.trim().toLowerCase() === comp.name.trim().toLowerCase()
+        );
+        
+        // 使用完全匹配的项，如果找到的话
+        const tiLineItem = exactMatch || null;
+
         if (tiLineItem) {
           console.log('更新组件:', JSON.stringify({
             name: comp.name,
