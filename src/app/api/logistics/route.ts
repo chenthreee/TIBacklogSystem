@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
           { purchaseOrderNumber: { $regex: searchTerm, $options: 'i' } },
           { tiOrderNumber: { $regex: searchTerm, $options: 'i' } },
           { customer: { $regex: searchTerm, $options: 'i' } },
+          { 'components.carrier': { $regex: searchTerm, $options: 'i' } }
         ],
       }
     : {}
