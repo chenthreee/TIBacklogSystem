@@ -141,6 +141,37 @@ export default function FinancialInvoice() {
     }
   };
 
+  const handleSingleRefresh = async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/invoices/query?orderNumber=${orderId}`);
+      if (!response.ok) {
+        throw new Error(`订单 ${orderId} 查询失败`);
+      }
+      const data = await response.json();
+      
+      setInvoiceInfo(prevInfo => prevInfo.map(item => 
+        item.orderId === orderId
+          ? { 
+              ...item, 
+              pdfUrl: data.pdfUrl ? createBlobUrl(data.pdfUrl.split(',')[1]) : undefined
+            }
+          : item
+      ));
+
+      toast({
+        title: "刷新成功",
+        description: `订单 ${orderId} 的发票信息已更新`,
+      });
+    } catch (error) {
+      console.error(`查询订单 ${orderId} 时出错:`, error);
+      toast({
+        title: "刷新失败",
+        description: `订单 ${orderId} 查询失败`,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleReadAll = () => {
     toast({
       title: "读取成功",
@@ -171,7 +202,7 @@ export default function FinancialInvoice() {
             //className="max-w-sm"
             className="flex-grow w-auto min-w-[250px] max-w-[450px] px-4 py-2"
           />
-          <Button 
+          {/* <Button 
             onClick={handleBatchRefresh} 
             disabled={isRefreshing}
             variant="outline"
@@ -200,7 +231,7 @@ export default function FinancialInvoice() {
                 一键刷新
               </>
             )}
-          </Button>
+          </Button> */}
         </div>
         <Button onClick={handleReadAll}>
           读取
@@ -268,17 +299,27 @@ export default function FinancialInvoice() {
                     </Dialog>
                   </TableCell>
                   <TableCell>
-                    {info.pdfUrl && (
-                      <a
-                        href={info.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center text-blue-600 hover:text-blue-800"
+                    <div className="flex items-center space-x-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSingleRefresh(info.orderId)}
                       >
-                        <FileText className="h-4 w-4 mr-1" />
-                        查看 PDF
-                      </a>
-                    )}
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        刷新
+                      </Button>
+                      {info.pdfUrl && (
+                        <a
+                          href={info.pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center text-blue-600 hover:text-blue-800"
+                        >
+                          <FileText className="h-4 w-4 mr-1" />
+                          查看 PDF
+                        </a>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
