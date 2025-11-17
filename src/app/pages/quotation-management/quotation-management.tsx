@@ -21,6 +21,7 @@ interface Quotation {
   components: Component[];
   quoteNumber: string;
   status: string;
+  quoteEndDate: string; // 有效日期
 }
 
 interface Component {

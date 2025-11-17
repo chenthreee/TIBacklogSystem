@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Quotation from '@/models/Quotation';
+import { QuoteIcon } from 'lucide-react';
 
 export async function GET(request: NextRequest) {
   await dbConnect();
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
       customer: q.customer || 'N/A',
       totalAmount: q.totalAmount ? Number(q.totalAmount) : 0,
       status: q.quoteStatus || 'N/A',
+      quoteEndDate: q.quoteEndDate || 'N/A',
       quoteNumber: q.quoteNumber || 'N/A',
       components: Array.isArray(q.components) ? q.components.map((c: any) => ({
         id: c._id?.toString(),

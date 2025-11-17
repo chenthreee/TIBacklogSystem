@@ -109,12 +109,13 @@ function QuotationTable({
         <TableHeader>
           <TableRow>
             <TableHead className="w-[50px]"></TableHead>
-            <TableHead className="w-1/6 px-4">TI报价号</TableHead>
-            <TableHead className="w-1/6 px-4">日期</TableHead>
-            <TableHead className="w-1/6 px-4">客户</TableHead>
-            <TableHead className="w-1/6 px-4">总金额</TableHead>
-            <TableHead className="w-1/6 px-4">状态</TableHead>
-            <TableHead className="w-1/6 px-4 text-center">操作</TableHead>
+            <TableHead className="w-1/7 px-4">TI报价号</TableHead>
+            <TableHead className="w-1/7 px-4">日期</TableHead>
+            <TableHead className="w-1/7 px-4">客户</TableHead>
+            <TableHead className="w-1/7 px-4">总金额</TableHead>
+            <TableHead className="w-1/7 px-4">状态</TableHead>
+            <TableHead className="w-1/7 px-4">有效日期</TableHead>
+            <TableHead className="w-1/7 px-4 text-center">操作</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -132,6 +133,7 @@ function QuotationTable({
                 <TableCell className="px-4">{quotation.customer}</TableCell>
                 <TableCell className="px-4">${quotation.totalAmount.toFixed(3)}</TableCell>
                 <TableCell className="px-4">{quotation.status}</TableCell>
+                <TableCell className="px-4">{quotation.quoteEndDate || 'N/A'}</TableCell>
                 <TableCell className="px-4">
                   <div className="flex justify-center space-x-2">
                     <Button
@@ -186,7 +188,7 @@ function QuotationTable({
               </TableRow>
               {expandedQuotations.includes(quotation.id) && (
                 <TableRow>
-                  <TableCell colSpan={6}>
+                  <TableCell colSpan={7}>
                     <Table>
                       <TableHeader>
                         <TableRow>
