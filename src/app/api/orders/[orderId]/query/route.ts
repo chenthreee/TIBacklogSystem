@@ -73,11 +73,11 @@ export async function GET(
         // 如果找不到完全匹配，则只通过零件号匹配
         if (!exactMatch) {
           console.log('未找到完全匹配，不匹配！');
-          // exactMatch = allLineItems.find((li: any) => {
-          //   const normalizedTiPart = li.tiPartNumber.trim().toLowerCase();
-          //   const normalizedCompName = comp.name.trim().toLowerCase();
-          //   return normalizedTiPart === normalizedCompName;
-          // });
+          exactMatch = allLineItems.find((li: any) => {
+            const normalizedTiPart = li.tiPartNumber.trim().toLowerCase();
+            const normalizedCompName = comp.name.trim().toLowerCase();
+            return normalizedTiPart === normalizedCompName;
+          });
         }
         
         // 使用匹配的项，如果找到的话
