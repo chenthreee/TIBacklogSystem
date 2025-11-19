@@ -42,7 +42,9 @@ export async function GET(request: NextRequest) {
       totalQuotations = quotations.length;
     } else {
       // 否则，使用分页
-      quotations = await Quotation.find(query).skip(skip).limit(limit).lean();
+      //这里用了sort({date:-1}),让最新的订单排在前面，省去一直下一页去找最新的日期的询价了
+      quotations = await Quotation.find(query).sort({ date: -1 }).skip(skip).limit(limit).lean();
+      //quotations = await Quotation.find(query).skip(skip).limit(limit).lean();
       totalQuotations = await Quotation.countDocuments(query);
     }
 
