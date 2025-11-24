@@ -62,7 +62,7 @@ export async function GET(
           }))
         }, null, 2));
 
-        // 先尝试通过零件号和tiLineItemNumber同时匹配
+        // 先尝试通过零件号和tiLineItemNumber同时匹配  这行没配上的时候就有点奇怪了
         let exactMatch = allLineItems.find((li: any) => {
           const normalizedTiPart = li.tiPartNumber.trim().toLowerCase();
           const normalizedCompName = comp.name.trim().toLowerCase();
