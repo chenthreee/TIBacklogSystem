@@ -7,6 +7,10 @@ import {
   TableHead,
   TableCell
 } from "@/components/ui/table";
+import {
+  ResizableTable,
+  ResizableTableHeader,
+} from "@/components/ui/resizable-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle, Edit, Trash2, ChevronUp, ChevronDown, Pencil, Search, AlertCircle, FileText, Check, X, Plus, Download } from "lucide-react";
@@ -319,8 +323,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
           导出选中订单
         </Button>
       </div>
-      <Table>
-        <TableHeader>
+      <ResizableTable>
+        <ResizableTableHeader storageKey="order-table-column-widths">
           <TableRow>
             <TableHead className="w-[50px]"></TableHead>
             <TableHead>PO号</TableHead>
@@ -331,7 +335,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
             <TableHead>状态</TableHead>
             <TableHead className="text-center">操作</TableHead>
           </TableRow>
-        </TableHeader>
+        </ResizableTableHeader>
         <TableBody>
           {orders.map((order) => (
             <React.Fragment key={order._id}>
@@ -539,7 +543,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
             </React.Fragment>
           ))}
         </TableBody>
-      </Table>
+      </ResizableTable>
 
       <Dialog open={isLogDialogOpen} onOpenChange={setIsLogDialogOpen}>
         <DialogContent className="sm:max-w-[700px] bg-white">
