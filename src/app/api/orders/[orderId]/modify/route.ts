@@ -123,8 +123,8 @@ export async function POST(
         tiPartNumber: component.tiPartNumber || component.name,
         customerAnticipatedUnitPrice: matchedComponent.tiPrice,
         customerCurrencyCode: 'USD',
-        quoteNumber: "26901017",
-        //quoteNumber: component.quoteNumber,
+        //quoteNumber: "26901017",
+        quoteNumber: component.quoteNumber,
         schedules: [
           {
             requestedQuantity: parseInt(localEdit ? localEdit.quantity : component.quantity),
