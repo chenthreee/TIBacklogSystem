@@ -32,7 +32,7 @@ interface LogisticsComponent {
   shippingDate: string
   estimatedDateOfArrival: string
   carrier: string[]
-  commercialInvoicePDF?: string
+  commercialInvoices?: Array<{ invoiceNumber: string; pdf: string }>
 }
 
 const fetchLogisticsInfo = async (page: number, searchTerm: string): Promise<{ logisticsInfo: LogisticsInfo[], totalPages: number }> => {
@@ -116,9 +116,10 @@ export default function LogisticsInformation() {
                     ...item,
                     components: data.components.map((component: LogisticsComponent) => ({
                       ...component,
-                      commercialInvoicePDF: component.commercialInvoicePDF 
-                        ? createBlobUrl(component.commercialInvoicePDF)
-                        : undefined
+                      commercialInvoices: component.commercialInvoices?.map((inv) => ({
+                        invoiceNumber: inv.invoiceNumber,
+                        pdf: inv.pdf ? createBlobUrl(inv.pdf) : ''
+                      }))
                     }))
                   }
                 : item
@@ -265,17 +266,25 @@ export default function LogisticsInformation() {
                                       : '无'}
                                   </TableCell>
                                   <TableCell>
-                                    {component.commercialInvoicePDF ? (
-                                      <a 
-                                        href={component.commercialInvoicePDF} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="flex items-center text-blue-600 hover:text-blue-800"
-                                      >
-                                        <FileText className="h-4 w-4 mr-1" />
-                                        查看发票
-                                      </a>
-                                    ) : '无'}
+                                    {component.commercialInvoices && component.commercialInvoices.length > 0
+                                      ? component.commercialInvoices.map((inv, i) => (
+                                          inv.pdf
+                                            ? <a
+                                                key={i}
+                                                href={inv.pdf}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center text-blue-600 hover:text-blue-800"
+                                              >
+                                                <FileText className="h-4 w-4 mr-1 shrink-0" />
+                                                {inv.invoiceNumber}
+                                              </a>
+                                            : <span key={i} className="flex items-center text-gray-400">
+                                                <FileText className="h-4 w-4 mr-1 shrink-0" />
+                                                {inv.invoiceNumber}
+                                              </span>
+                                        ))
+                                      : '无'}
                                   </TableCell>
                                 </TableRow>
                               ))}

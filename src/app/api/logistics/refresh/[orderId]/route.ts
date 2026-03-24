@@ -44,6 +44,15 @@ export async function GET(
 
       const trackingNumber = consolidatedInfo.carrierShipmentMasterTrackingNumber
 
+      // 提取该 consolidatedInfo 下所有发票的 PDF（过滤掉空值）
+      const invoicePDFs: Array<{ invoiceNumber: string; pdf: string }> =
+        (consolidatedInfo.commercialInvoiceList ?? [])
+          .filter((inv: any) => inv.commercialInvoicePDF)
+          .map((inv: any) => ({
+            invoiceNumber: inv.commercialInvoiceNumber,
+            pdf: inv.commercialInvoicePDF
+          }))
+
       // 遍历所有的 bookingOrderDetails
       consolidatedInfo.bookingOrderDetails.forEach((booking: any) => {
         if (booking.packageDetails) {
@@ -56,6 +65,12 @@ export async function GET(
                   if (trackingNumber && !existing.carriers.includes(trackingNumber)) {
                     existing.carriers.push(trackingNumber)
                   }
+                  // 追加发票（按 invoiceNumber 去重）
+                  for (const inv of invoicePDFs) {
+                    if (!existing.commercialInvoices.some((e: any) => e.invoiceNumber === inv.invoiceNumber)) {
+                      existing.commercialInvoices.push(inv)
+                    }
+                  }
                   // 取最新的发货日期和预计到达日期（按 shippingDate 最大值）
                   if (consolidatedInfo.shippingDate > existing.shippingDate) {
                     existing.shippingDate = consolidatedInfo.shippingDate
@@ -67,7 +82,7 @@ export async function GET(
                     shippingDate: consolidatedInfo.shippingDate,
                     estimatedDateOfArrival: consolidatedInfo.estimatedDateOfArrival,
                     carriers: trackingNumber ? [trackingNumber] : [],
-                    commercialInvoicePDF: consolidatedInfo.commercialInvoiceList?.[0]?.commercialInvoicePDF
+                    commercialInvoices: [...invoicePDFs]
                   })
                 }
               })
@@ -87,10 +102,10 @@ export async function GET(
         component.estimatedDateOfArrival = matchingItem.estimatedDateOfArrival
         component.carrier = matchingItem.carriers
         
-        // 返回更新后的组件，包括 commercialInvoicePDF（仅用于前端显示）
+        // 返回更新后的组件，包括 commercialInvoices（仅用于前端显示）
         return {
           ...component.toObject(),
-          commercialInvoicePDF: matchingItem.commercialInvoicePDF
+          commercialInvoices: matchingItem.commercialInvoices
         }
       }
       return component.toObject()
@@ -99,7 +114,7 @@ export async function GET(
     // 保存更新后的订单信息到数据库（不包括 commercialInvoicePDF）
     await Order.findOneAndUpdate(
       { orderNumber: orderId },
-      { $set: { components: updatedComponents.map((c: any) => ({ ...c, commercialInvoicePDF: undefined })) } },
+      { $set: { components: updatedComponents.map((c: any) => ({ ...c, commercialInvoices: undefined })) } },
       { new: true }
     )
 
