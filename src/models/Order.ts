@@ -21,7 +21,7 @@ const ComponentSchema = new mongoose.Schema({
   quoteNumber: String,
   shippingDate: String,
   estimatedDateOfArrival: String,
-  carrier: String,
+  carrier: [String],
   k3Code: String,
   type: String,
   description: String,

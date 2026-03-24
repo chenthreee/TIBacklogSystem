@@ -42,19 +42,34 @@ export async function GET(
         return // 跳过这个 consolidatedInfo
       }
 
+      const trackingNumber = consolidatedInfo.carrierShipmentMasterTrackingNumber
+
       // 遍历所有的 bookingOrderDetails
       consolidatedInfo.bookingOrderDetails.forEach((booking: any) => {
         if (booking.packageDetails) {
           booking.packageDetails.forEach((pkg: any) => {
             if (pkg.itemDetails) {
               pkg.itemDetails.forEach((item: any) => {
-                itemDetailsMap.set(item.tiPartNumber, {
-                  ...item,
-                  shippingDate: consolidatedInfo.shippingDate,
-                  estimatedDateOfArrival: consolidatedInfo.estimatedDateOfArrival,
-                  carrier: consolidatedInfo.carrierShipmentMasterTrackingNumber,
-                  commercialInvoicePDF: consolidatedInfo.commercialInvoiceList?.[0]?.commercialInvoicePDF
-                })
+                const existing = itemDetailsMap.get(item.tiPartNumber)
+                if (existing) {
+                  // 已存在该零件，追加快递单号（去重）
+                  if (trackingNumber && !existing.carriers.includes(trackingNumber)) {
+                    existing.carriers.push(trackingNumber)
+                  }
+                  // 取最新的发货日期和预计到达日期（按 shippingDate 最大值）
+                  if (consolidatedInfo.shippingDate > existing.shippingDate) {
+                    existing.shippingDate = consolidatedInfo.shippingDate
+                    existing.estimatedDateOfArrival = consolidatedInfo.estimatedDateOfArrival
+                  }
+                } else {
+                  itemDetailsMap.set(item.tiPartNumber, {
+                    ...item,
+                    shippingDate: consolidatedInfo.shippingDate,
+                    estimatedDateOfArrival: consolidatedInfo.estimatedDateOfArrival,
+                    carriers: trackingNumber ? [trackingNumber] : [],
+                    commercialInvoicePDF: consolidatedInfo.commercialInvoiceList?.[0]?.commercialInvoicePDF
+                  })
+                }
               })
             }
           })
@@ -70,7 +85,7 @@ export async function GET(
         // 更新组件信息，但不包括 commercialInvoicePDF
         component.shippingDate = matchingItem.shippingDate
         component.estimatedDateOfArrival = matchingItem.estimatedDateOfArrival
-        component.carrier = matchingItem.carrier
+        component.carrier = matchingItem.carriers
         
         // 返回更新后的组件，包括 commercialInvoicePDF（仅用于前端显示）
         return {

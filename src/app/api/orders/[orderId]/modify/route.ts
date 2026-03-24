@@ -87,8 +87,8 @@ export async function POST(
       if (!quotation) {
         console.log("未找到报价，组件名称:", component.name);
         return NextResponse.json({ 
-          error: '修改失败：TI报价号中无对应的元件', 
-          componentName: component.name 
+            error: '修改失败：TI报价号中无对应的元件', 
+            componentName: component.name 
         }, { status: 400 })
       }
 
@@ -110,7 +110,7 @@ export async function POST(
       );
       console.log("组件在订单中的索引:", originalIndex);//完成板本
 
-      // 在添加 lineItem 之前打印信息
+      // 在添加 lineItem 之前打印信息 这里的打印是正确的
       console.log("准备添加 lineItem，组件信息:", {
         partNumber: component.tiPartNumber || component.name,
         quantity: component.quantity,
@@ -123,8 +123,13 @@ export async function POST(
         tiPartNumber: component.tiPartNumber || component.name,
         customerAnticipatedUnitPrice: matchedComponent.tiPrice,
         customerCurrencyCode: 'USD',
-        //quoteNumber: "26901017",
-        quoteNumber: component.quoteNumber,
+        //处理一些 更改订单号更改不了地情况 就在这里写死 然后发过去
+        //有些时候读取不了localEdit 暂时还没排查出原因
+        //quoteNumber: "26901017", 
+        //改成这样才合理吧
+        quoteNumber: localEdit? localEdit.quoteNumber:component.quoteNumber,
+        //上面这个版本还没上库 库上是下面那个版本 上面这个还不知道对不对 经量先不改
+        //quoteNumber: component.quoteNumber,
         schedules: [
           {
             requestedQuantity: parseInt(localEdit ? localEdit.quantity : component.quantity),

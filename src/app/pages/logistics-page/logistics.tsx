@@ -31,7 +31,7 @@ interface LogisticsComponent {
   name: string
   shippingDate: string
   estimatedDateOfArrival: string
-  carrier: string
+  carrier: string[]
   commercialInvoicePDF?: string
 }
 
@@ -257,7 +257,13 @@ export default function LogisticsInformation() {
                                   <TableCell>{component.name || '未知'}</TableCell>
                                   <TableCell>{component.shippingDate || '未发货'}</TableCell>
                                   <TableCell>{component.estimatedDateOfArrival || '未知'}</TableCell>
-                                  <TableCell>{component.carrier || '无'}</TableCell>
+                                  <TableCell>
+                                    {Array.isArray(component.carrier) && component.carrier.length > 0
+                                      ? component.carrier.map((trackingNo, i) => (
+                                          <div key={i}>{trackingNo}</div>
+                                        ))
+                                      : '无'}
+                                  </TableCell>
                                   <TableCell>
                                     {component.commercialInvoicePDF ? (
                                       <a 
